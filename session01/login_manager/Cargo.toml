@@ -1,0 +1,10 @@
+[package]
+name = "login_manager"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+authentication = { path = "../authentication" }
+util = { path = "../../util" }
+clap ={ version = "4", features = ["derive"] }
+crossterm = "0"

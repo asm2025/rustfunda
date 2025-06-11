@@ -1,0 +1,20 @@
+[package]
+name = "rustfunda"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[workspace]
+members = [ 
+	"util",
+	"session01", 
+	"session01/authentication", 
+	"session01/login", 
+	"session01/login_manager", 
+	"session01/variables",
+	"session02",
+	"session02/hello-thread",
+	"session02/divide-work",
+	"session02/scoped-threads",
+]

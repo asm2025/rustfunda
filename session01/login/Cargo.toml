@@ -1,0 +1,10 @@
+[package]
+name = "login"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+authentication = { path = "../authentication" }
+util = { path = "../../util" }
+crossterm = "0"
+dialoguer = "0"
