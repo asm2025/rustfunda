@@ -17,4 +17,5 @@ members = [
 	"session02/hello-thread",
 	"session02/divide-work",
 	"session02/scoped-threads",
+	"session02/deadlocks",
 ]

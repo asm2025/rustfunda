@@ -246,6 +246,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "deadlocks"
+version = "0.1.0"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "derive_more"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
