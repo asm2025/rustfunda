@@ -18,4 +18,5 @@ members = [
 	"session02/divide-work",
 	"session02/scoped-threads",
 	"session02/deadlocks",
+	"session02/dashing",
 ]

@@ -25,18 +25,14 @@ fn main() {
                         println!(">>> {i} lock acquired");
                         break;
                     }
-                    Err(ex) => {
-                        match ex {
-                            std::sync::TryLockError::Poisoned(_) => {
-                                println!(">>> {i} lock is poisoned.");
-                                return;
-                            }
-                            _ => {
-                                // Sleep to avoid busy waiting
-                                thread::sleep(Duration::from_millis(100));
-                                tries += 1;
-                            }
-                        }
+                    Err(std::sync::TryLockError::Poisoned(_)) => {
+                        println!(">>> {i} lock is poisoned.");
+                        return;
+                    }
+                    Err(std::sync::TryLockError::WouldBlock) => {
+                        // Sleep to avoid busy waiting
+                        thread::sleep(Duration::from_millis(100));
+                        tries += 1;
                     }
                 }
             }
@@ -56,10 +52,19 @@ fn main() {
         }
     }
 
-    if let Ok(shared) = SHARED.try_lock() {
-        println!("Final value of shared: {}", *shared);
-    } else {
-        println!("Failed to acquire lock on SHARED");
+    match SHARED.try_lock() {
+        Ok(shared) => {
+            println!("Final value: {}", *shared);
+        }
+        Err(std::sync::TryLockError::Poisoned(e)) => {
+            eprintln!("{}", e);
+            // Attempt to recover from the poison
+            let recovered = e.into_inner();
+            println!("Recovered value: {}", *recovered);
+        }
+        Err(std::sync::TryLockError::WouldBlock) => {
+            eprintln!("Mutex is still locked, cannot access shared data.");
+        }
     }
 
     println!("All threads finished.");
