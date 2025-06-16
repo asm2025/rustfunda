@@ -6,7 +6,10 @@ use dialoguer::{Select, theme::ColorfulTheme};
 use std::{io::stdout, path::Path};
 
 use authentication::*;
-use util::*;
+use util::{
+    Result,
+    io::{password, pause, sinput, spassword},
+};
 
 fn main() {
     clear_screen().unwrap();

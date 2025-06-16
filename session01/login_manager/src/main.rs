@@ -6,7 +6,7 @@ use crossterm::{
 use std::{io::stdout, path::Path};
 
 use authentication::*;
-use util::*;
+use util::{Result, io::pause};
 
 #[derive(Parser)]
 #[command()]

@@ -1,4 +1,4 @@
-use util::input;
+use util::io::input;
 
 fn main() {
     loop {

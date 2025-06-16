@@ -1,18 +1,11 @@
-use std::{
-    sync::{Arc, Condvar, Mutex},
-    thread,
-};
-use util::ninput;
+use std::thread;
+use util::{io::ninput, threading::Signal};
 
-fn parkable(n: usize, signal: Arc<(Mutex<bool>, Condvar)>) {
+fn parkable(n: usize, signal: Signal) {
     loop {
         thread::park();
         println!(">>> Thread {n} was unparked briefly.");
-
-        let (lock, cvar) = &*signal;
-        let mut done = lock.lock().unwrap();
-        *done = true;
-        cvar.notify_one();
+        signal.set();
     }
 }
 
@@ -20,7 +13,7 @@ fn main() {
     let mut threads = vec![];
 
     for i in 0..10 {
-        let signal = Arc::new((Mutex::new(false), Condvar::new()));
+        let signal = Signal::new();
         let signal2 = signal.clone();
         threads.push((
             thread::spawn(move || {
@@ -42,21 +35,9 @@ fn main() {
 
         if index < threads.len() {
             let (handle, signal) = &threads[index];
-            let (lock, cvar) = &**signal;
-
-            {
-                let mut done = lock.lock().unwrap();
-                *done = false;
-            }
-
             println!("Unparking thread {input}.");
             handle.thread().unpark();
-
-            let mut done = lock.lock().unwrap();
-
-            while !*done {
-                done = cvar.wait(done).unwrap();
-            }
+            signal.wait_reset();
         } else {
             println!("Invalid thread number: {input}. Please try again.");
         }
