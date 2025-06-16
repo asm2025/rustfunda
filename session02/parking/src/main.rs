@@ -4,7 +4,7 @@ use util::{io::ninput, threading::Signal};
 fn parkable(n: usize, signal: Signal) {
     loop {
         thread::park();
-        println!(">>> Thread {n} was unparked briefly.");
+        println!("{n}>>> unparked briefly.");
         signal.set();
     }
 }

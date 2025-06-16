@@ -22,11 +22,11 @@ fn main() {
                 match SHARED.try_lock() {
                     Ok(mut shared) => {
                         *shared += 1;
-                        println!(">>> {i} lock acquired");
+                        println!("{i}>>> lock acquired");
                         break;
                     }
                     Err(std::sync::TryLockError::Poisoned(_)) => {
-                        println!(">>> {i} lock is poisoned.");
+                        println!("{i}>>> lock is poisoned.");
                         return;
                     }
                     Err(std::sync::TryLockError::WouldBlock) => {

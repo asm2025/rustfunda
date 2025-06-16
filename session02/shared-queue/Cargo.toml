@@ -1,0 +1,10 @@
+[package]
+name = "shared-queue"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+util = { path = "../../util" }
+crossbeam = "0"
+num_cpus = "0"
+fake = { version = "4", features = ["derive"] }

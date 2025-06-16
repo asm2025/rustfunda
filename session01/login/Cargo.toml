@@ -8,3 +8,4 @@ authentication = { path = "../authentication" }
 util = { path = "../../util" }
 crossterm = "0"
 dialoguer = "0"
+uuid = { version = "1", features = ["v4", "serde"] }

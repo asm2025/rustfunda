@@ -22,4 +22,7 @@ members = [
 	"session02/parking",
 	"session02/rwlocks",
 	"session02/channels",
+	"session02/workers",
+	"session02/shared-queue",
+	"session02/work-stealing",
 ]

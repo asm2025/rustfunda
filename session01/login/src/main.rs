@@ -4,11 +4,13 @@ use crossterm::{
 };
 use dialoguer::{Select, theme::ColorfulTheme};
 use std::{io::stdout, path::Path};
+use uuid::Uuid;
 
 use authentication::*;
 use util::{
     Result,
-    io::{password, pause, sinput, spassword},
+    auth::{User, UserFormatter, UserRole},
+    io::{input, password, pause, sinput, spassword},
 };
 
 fn main() {
@@ -95,9 +97,9 @@ fn login(user_store: &UserStore) -> Result<()> {
         if let Ok(user) = user_store.login(&username, &password) {
             println!("{}", user_store.great_user(&user.username()));
             match user.role() {
-                authentication::UserRole::Admin => println!("You are logged in as an Admin."),
-                authentication::UserRole::User => println!("You are logged in as a User."),
-                authentication::UserRole::None => println!("You are logged in with no role."),
+                UserRole::Admin => println!("You are logged in as an Admin."),
+                UserRole::User => println!("You are logged in as a User."),
+                UserRole::None => println!("You are logged in with no role."),
             }
             pause();
             break;
@@ -157,10 +159,17 @@ fn list_users_by_role(user_store: &UserStore) -> Result<()> {
 fn add_user(user_store: &mut UserStore) -> Result<()> {
     let username = sinput(Some("Enter username: "))?;
     let password = spassword(Some("Enter password: "))?;
+    let name = sinput(Some("Enter name (Leave empty for default): ")).unwrap_or(username.clone());
     let role: UserRole = sinput(Some("Enter role (leave empty for default): "))
         .unwrap_or("user".to_string())
         .into();
-    let user = User::new(&username, &user_store.hash_password(&password), role);
+    let user = User::build().with(
+        &Uuid::new_v4(),
+        &name,
+        &username,
+        &user_store.hash_password(&password),
+        role,
+    );
     user_store.add(user)?;
     println!("User '{}' added successfully.", username);
     pause();
@@ -173,18 +182,23 @@ fn update_user(user_store: &mut UserStore) -> Result<()> {
         .get_by_username(&username)
         .cloned()
         .ok_or_else(|| format!("User '{}' not found.", username))?;
+    let name = input(Some("Enter new name (leave empty to keep current): "))?;
     let password = password(Some("Enter new password (leave empty to keep current): "))?;
     let role: UserRole = sinput(Some("Enter new role (leave empty to keep current): "))
         .unwrap_or("none".to_string())
         .into();
-    if password.is_empty() && role == UserRole::None {
+    if name.is_empty() && password.is_empty() && role == UserRole::None {
         println!("No changes made to user '{}'.", username);
         pause();
         return Ok(());
     }
 
+    if !name.is_empty() {
+        user.set_name(&name);
+    }
+
     if !password.is_empty() {
-        user.set_password_hash(&user_store.hash_password(&password));
+        user.set_password(&user_store.hash_password(&password));
     }
 
     user.set_role(role);

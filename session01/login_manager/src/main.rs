@@ -4,9 +4,14 @@ use crossterm::{
     terminal::{Clear, ClearType},
 };
 use std::{io::stdout, path::Path};
+use uuid::Uuid;
 
 use authentication::*;
-use util::{Result, io::pause};
+use util::{
+    Result,
+    auth::{User, UserFormatter, UserRole},
+    io::pause,
+};
 
 #[derive(Parser)]
 #[command()]
@@ -34,6 +39,8 @@ enum Commands {
     /// Add a new user
     Add {
         #[arg(short, long)]
+        name: String,
+        #[arg(short, long)]
         username: String,
         #[arg(short, long)]
         password: String,
@@ -44,6 +51,8 @@ enum Commands {
     Update {
         #[arg(short, long)]
         username: String,
+        #[arg(short, long)]
+        new_name: Option<String>,
         #[arg(short, long)]
         new_username: Option<String>,
         #[arg(short, long)]
@@ -85,16 +94,18 @@ fn main() {
             }
         }
         Some(Commands::Add {
+            name,
             username,
             password,
             role,
         }) => {
-            if let Err(ex) = add_user(&mut user_store, &username, &password, role) {
+            if let Err(ex) = add_user(&mut user_store, &name, &username, &password, role) {
                 eprintln!("{}", ex);
             }
         }
         Some(Commands::Update {
             username,
+            new_name,
             new_username,
             new_password,
             new_role,
@@ -102,6 +113,7 @@ fn main() {
             if let Err(ex) = update_user(
                 &mut user_store,
                 &username,
+                new_name.as_deref(),
                 new_username.as_deref(),
                 new_password.as_deref(),
                 new_role.unwrap_or(UserRole::None),
@@ -136,9 +148,9 @@ fn login(user_store: &UserStore, username: &str, password: &str) -> Result<()> {
     if let Ok(user) = user_store.login(&username, &password) {
         println!("{}", user_store.great_user(&user.username()));
         match user.role() {
-            authentication::UserRole::Admin => println!("You are logged in as an Admin."),
-            authentication::UserRole::User => println!("You are logged in as a User."),
-            authentication::UserRole::None => println!("You are logged in with no role."),
+            UserRole::Admin => println!("You are logged in as an Admin."),
+            UserRole::User => println!("You are logged in as a User."),
+            UserRole::None => println!("You are logged in with no role."),
         }
         pause();
     } else {
@@ -184,13 +196,20 @@ fn list_users_by_role(user_store: &UserStore, role: UserRole) -> Result<()> {
 
 fn add_user(
     user_store: &mut UserStore,
+    name: &str,
     username: &str,
     password: &str,
     role: UserRole,
 ) -> Result<()> {
     clear_screen()?;
 
-    let user = User::new(&username, &user_store.hash_password(&password), role);
+    let user = User::build().with(
+        &Uuid::new_v4(),
+        name,
+        username,
+        &user_store.hash_password(password),
+        role,
+    );
     user_store.add(user)?;
     user_store.save_to_file(Path::new("../users.json"))?;
     println!("User '{}' added successfully.", username);
@@ -201,6 +220,7 @@ fn add_user(
 fn update_user(
     user_store: &mut UserStore,
     username: &str,
+    new_name: Option<&str>,
     new_username: Option<&str>,
     new_password: Option<&str>,
     nw_role: UserRole,
@@ -210,12 +230,16 @@ fn update_user(
         .cloned()
         .ok_or_else(|| format!("User '{}' not found.", username))?;
 
+    if let Some(new_name) = new_name {
+        user.set_name(new_name);
+    }
+
     if let Some(new_username) = new_username {
         user.set_username(new_username);
     }
 
     if let Some(new_password) = new_password {
-        user.set_password_hash(&user_store.hash_password(new_password));
+        user.set_password(&user_store.hash_password(new_password));
     }
 
     if nw_role != UserRole::None {

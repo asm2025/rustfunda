@@ -8,3 +8,4 @@ authentication = { path = "../authentication" }
 util = { path = "../../util" }
 clap ={ version = "4", features = ["derive"] }
 crossterm = "0"
+uuid = { version = "1", features = ["v4", "serde"] }
