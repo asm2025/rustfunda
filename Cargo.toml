@@ -20,5 +20,6 @@ members = [
 	"session02/deadlocks",
 	"session02/dashing",
 	"session02/parking",
+	"session02/rwlocks",
 	"session02/channels",
 ]
