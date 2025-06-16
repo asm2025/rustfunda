@@ -26,42 +26,7 @@ impl Signal {
         *signaled = false;
     }
 
-    pub fn is_set(&self) -> bool {
-        let (lock, _) = &*self.inner;
-        let signaled = lock.lock().unwrap();
-        *signaled
-    }
-
     pub fn wait(&self) {
-        let (lock, cvar) = &*self.inner;
-        let mut signaled = lock.lock().unwrap();
-
-        while !*signaled {
-            signaled = cvar.wait(signaled).unwrap();
-        }
-    }
-
-    pub fn wait_timeout(&self, timeout: Duration) -> bool {
-        if timeout.is_zero() {
-            self.wait();
-            return true;
-        }
-
-        let (lock, cvar) = &*self.inner;
-        let mut signaled = lock.lock().unwrap();
-        let start = Instant::now();
-
-        while !*signaled {
-            let elapsed = start.elapsed();
-            let Some(remaining) = timeout.checked_sub(elapsed) else {
-                return false;
-            };
-            signaled = cvar.wait_timeout(signaled, remaining).unwrap().0;
-        }
-        true
-    }
-
-    pub fn wait_reset(&self) {
         let (lock, cvar) = &*self.inner;
         let mut signaled = lock.lock().unwrap();
 
@@ -73,9 +38,9 @@ impl Signal {
         *signaled = false;
     }
 
-    pub fn wait_timeout_reset(&self, timeout: Duration) -> bool {
+    pub fn wait_timeout(&self, timeout: Duration) -> bool {
         if timeout.is_zero() {
-            self.wait_reset();
+            self.wait();
             return true;
         }
 

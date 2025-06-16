@@ -37,7 +37,7 @@ fn main() {
             let (handle, signal) = &threads[index];
             println!("Unparking thread {input}.");
             handle.thread().unpark();
-            signal.wait_reset();
+            signal.wait();
         } else {
             println!("Invalid thread number: {input}. Please try again.");
         }

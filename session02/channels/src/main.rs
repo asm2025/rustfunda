@@ -71,7 +71,7 @@ fn main() {
             break;
         }
 
-        signal.wait_reset();
+        signal.wait();
     }
 
     if let Err(ex) = handle.join() {
