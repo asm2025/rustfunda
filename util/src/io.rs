@@ -1,7 +1,28 @@
+use crossterm::{
+    ExecutableCommand, cursor,
+    terminal::{Clear, ClearType},
+};
+use dialoguer::{Select, theme::ColorfulTheme};
 use rpassword::read_password;
 use std::io::{Write, stdin, stdout};
 
 use crate::Result;
+
+pub fn display_menu(items: &[&str], prompt: Option<&str>) -> Result<usize> {
+    clear_screen()?;
+    print_prompt(prompt);
+
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Please select an option")
+        .items(items)
+        .default(0)
+        .interact()?;
+    Ok(if selection == items.len() - 1 {
+        0
+    } else {
+        selection + 1
+    })
+}
 
 pub fn input(prompt: Option<&str>) -> Result<String> {
     print_prompt(prompt);
@@ -56,6 +77,14 @@ pub fn spassword(prompt: Option<&str>) -> Result<String> {
 pub fn pause() {
     println!("Press any key to continue...");
     input(None).unwrap();
+}
+
+pub fn clear_screen() -> Result<()> {
+    let mut stdout = stdout();
+    stdout
+        .execute(Clear(ClearType::All))?
+        .execute(cursor::MoveTo(0, 0))?;
+    Ok(())
 }
 
 fn print_prompt(prompt: Option<&str>) {

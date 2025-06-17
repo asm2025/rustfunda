@@ -25,4 +25,6 @@ members = [
 	"session02/workers",
 	"session02/shared-queue",
 	"session02/work-stealing",
+	"session02/rayon_iters",
+	"session02/rayon_scopes",
 ]

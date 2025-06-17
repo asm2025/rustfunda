@@ -1,0 +1,9 @@
+[package]
+name = "rayon_scopes"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+util ={ path = "../../util" }
+rayon = "1"
+num_cpus = "1"

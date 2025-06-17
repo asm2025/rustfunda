@@ -10,3 +10,5 @@ fake = { version = "4", features = ["derive", "uuid", "time", "email_address"] }
 rand = "0"
 serde = { version = "1", features = ["derive"] }
 uuid = { version = "1", features = ["v4", "serde"] }
+dialoguer = "0"
+crossterm = "0"

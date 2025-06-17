@@ -1,32 +1,35 @@
-use crossterm::{
-    ExecutableCommand, cursor,
-    terminal::{Clear, ClearType},
-};
-use dialoguer::{Select, theme::ColorfulTheme};
-use std::{io::stdout, path::Path};
-use uuid::Uuid;
-
 use authentication::*;
+use std::path::Path;
 use util::{
     Result,
     auth::{User, UserFormatter, UserRole},
-    io::{input, password, pause, sinput, spassword},
+    io::{clear_screen, display_menu, input, password, pause, sinput, spassword},
 };
+use uuid::Uuid;
 
 fn main() {
-    clear_screen().unwrap();
-
     let mut user_store =
         UserStore::load_from_file(Path::new("../users.json")).unwrap_or_else(|ex| {
             eprintln!("{}", ex);
             std::process::exit(1);
         });
+    let items = vec![
+        "Login",
+        "List users",
+        "List users by role",
+        "Add user",
+        "Update user",
+        "Remove user",
+        "Save users",
+        "Exit",
+    ];
 
     loop {
-        let choice: usize = display_menu().unwrap_or_else(|ex| {
-            eprintln!("{}", ex);
-            10
-        });
+        let choice: usize = display_menu(&items, Some("Welcome to the Login System!"))
+            .unwrap_or_else(|ex| {
+                eprintln!("{}", ex);
+                10
+            });
 
         let result = match choice {
             1 => login(&user_store),
@@ -51,40 +54,6 @@ fn main() {
             pause();
         }
     }
-}
-
-fn clear_screen() -> Result<()> {
-    let mut stdout = stdout();
-    stdout
-        .execute(Clear(ClearType::All))?
-        .execute(cursor::MoveTo(0, 0))?;
-    Ok(())
-}
-
-fn display_menu() -> Result<usize> {
-    let items = vec![
-        "Login",
-        "List users",
-        "List users by role",
-        "Add user",
-        "Update user",
-        "Remove user",
-        "Save users",
-        "Exit",
-    ];
-    clear_screen()?;
-
-    println!("Welcome to the Login System!");
-    let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Please select an option")
-        .items(&items)
-        .default(0)
-        .interact()?;
-    Ok(if selection == items.len() - 1 {
-        0
-    } else {
-        selection + 1
-    })
 }
 
 fn login(user_store: &UserStore) -> Result<()> {
