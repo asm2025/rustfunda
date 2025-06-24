@@ -29,4 +29,5 @@ members = [
 	"session02/rayon_scopes",
 	"session03",
 	"session03/hello_async",
+	"session03/hello_tokio",
 ]
