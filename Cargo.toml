@@ -27,4 +27,6 @@ members = [
 	"session02/work-stealing",
 	"session02/rayon_iters",
 	"session02/rayon_scopes",
+	"session03",
+	"session03/hello_async",
 ]
