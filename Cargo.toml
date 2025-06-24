@@ -30,4 +30,5 @@ members = [
 	"session03",
 	"session03/hello_async",
 	"session03/hello_tokio",
+	"session03/hello_blocking",
 ]

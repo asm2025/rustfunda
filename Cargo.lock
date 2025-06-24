@@ -722,6 +722,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "hello_blocking"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
 name = "hello_tokio"
 version = "0.1.0"
 dependencies = [
