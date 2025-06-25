@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1"
 rpassword = "7"
 bcrypt = "0"
 fake = { version = "4", features = ["derive", "uuid", "time", "email_address"] }

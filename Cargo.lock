@@ -68,6 +68,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.98"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
+
+[[package]]
 name = "atomic"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -80,6 +86,7 @@ dependencies = [
 name = "authentication"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bcrypt",
  "bimap",
  "lazy_static",
@@ -823,6 +830,7 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 name = "login"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "authentication",
  "util",
  "uuid",
@@ -832,6 +840,7 @@ dependencies = [
 name = "login_manager"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "authentication",
  "clap",
  "crossterm",
@@ -1056,6 +1065,7 @@ dependencies = [
 name = "rayon_iters"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "rayon",
  "util",
 ]
@@ -1427,6 +1437,7 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 name = "util"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bcrypt",
  "crossterm",
  "dialoguer",

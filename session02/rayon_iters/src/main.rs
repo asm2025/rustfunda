@@ -1,9 +1,7 @@
+use anyhow::{Result, anyhow};
 use rayon::prelude::*;
 use std::time::Instant;
-use util::{
-    Result,
-    io::{display_menu, ninput, pause},
-};
+use util::io::{display_menu, ninput, pause};
 
 fn main() {
     let items = vec!["Sum", "Is prime", "Sum of prime numbers", "Exit"];
@@ -23,7 +21,7 @@ fn main() {
                     std::process::exit(0);
                 }
 
-                Err("Invalid option. Please try again.".into())
+                Err(anyhow!("Invalid option. Please try again."))
             }
         };
 

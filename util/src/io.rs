@@ -1,3 +1,4 @@
+use anyhow::{Result, anyhow};
 use crossterm::{
     ExecutableCommand, cursor,
     terminal::{Clear, ClearType},
@@ -6,14 +7,15 @@ use dialoguer::{Select, theme::ColorfulTheme};
 use rpassword::read_password;
 use std::io::{Write, stdin, stdout};
 
-use crate::Result;
-
 pub fn display_menu(items: &[&str], prompt: Option<&str>) -> Result<usize> {
     clear_screen()?;
-    print_prompt(prompt);
 
+    let prompt = match prompt {
+        Some(s) if !s.is_empty() => s,
+        _ => "Please select an option",
+    };
     let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Please select an option")
+        .with_prompt(prompt)
         .items(items)
         .default(0)
         .interact()?;
@@ -31,15 +33,20 @@ pub fn input(prompt: Option<&str>) -> Result<String> {
     stdin()
         .read_line(&mut buffer)
         .expect("Failed to get input.");
-    let buffer = buffer.trim();
-    Ok(buffer.to_string())
+
+    if !buffer.is_empty() {
+        // Remove the trailing newlines
+        buffer.pop();
+    }
+
+    Ok(buffer)
 }
 
 pub fn sinput(prompt: Option<&str>) -> Result<String> {
     let value = input(prompt)?;
 
     if value.is_empty() {
-        return Err("No input provided".into());
+        return Err(anyhow!("No input provided"));
     }
 
     Ok(value)
@@ -53,7 +60,7 @@ where
     let value = sinput(prompt)?;
     match value.parse::<T>() {
         Ok(number) => Ok(number),
-        Err(e) => Err(Box::new(e)),
+        Err(e) => Err(anyhow!("{}", e)),
     }
 }
 
@@ -68,7 +75,7 @@ pub fn spassword(prompt: Option<&str>) -> Result<String> {
     let password = password(prompt)?;
 
     if password.is_empty() {
-        return Err("No password provided".into());
+        return Err(anyhow!("No password provided"));
     }
 
     Ok(password)

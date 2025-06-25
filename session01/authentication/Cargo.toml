@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 util = { path = "../../util" }
+anyhow = "1"
 bcrypt = "0"
 lazy_static = "1"
 serde = { version = "1", features = ["derive"] }

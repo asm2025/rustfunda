@@ -1,3 +1,4 @@
+use anyhow::{Result, anyhow};
 use clap::{CommandFactory, Parser, Subcommand};
 use crossterm::{
     ExecutableCommand, cursor,
@@ -8,7 +9,6 @@ use uuid::Uuid;
 
 use authentication::*;
 use util::{
-    Result,
     auth::{User, UserFormatter, UserRole},
     io::pause,
 };
@@ -154,7 +154,7 @@ fn login(user_store: &UserStore, username: &str, password: &str) -> Result<()> {
         }
         pause();
     } else {
-        return Err("Invalid credentials. Please try again.".into());
+        return Err(anyhow!("Invalid credentials. Please try again."));
     }
 
     Ok(())
@@ -228,7 +228,7 @@ fn update_user(
     let mut user = user_store
         .get_by_username(&username)
         .cloned()
-        .ok_or_else(|| format!("User '{}' not found.", username))?;
+        .ok_or_else(|| anyhow!("User '{}' not found.", username))?;
 
     if let Some(new_name) = new_name {
         user.set_name(new_name);

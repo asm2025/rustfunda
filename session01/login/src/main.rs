@@ -1,7 +1,7 @@
+use anyhow::{Result, anyhow};
 use authentication::*;
 use std::path::Path;
 use util::{
-    Result,
     auth::{User, UserFormatter, UserRole},
     io::{clear_screen, display_menu, input, password, pause, sinput, spassword},
 };
@@ -45,7 +45,7 @@ fn main() {
                     std::process::exit(0);
                 }
 
-                Err("Invalid option. Please try again.".into())
+                Err(anyhow!("Invalid option. Please try again."))
             }
         };
 
@@ -150,7 +150,7 @@ fn update_user(user_store: &mut UserStore) -> Result<()> {
     let mut user = user_store
         .get_by_username(&username)
         .cloned()
-        .ok_or_else(|| format!("User '{}' not found.", username))?;
+        .ok_or_else(|| anyhow!("User '{}' not found.", username))?;
     let name = input(Some("Enter new name (leave empty to keep current): "))?;
     let password = password(Some("Enter new password (leave empty to keep current): "))?;
     let role: UserRole = sinput(Some("Enter new role (leave empty to keep current): "))

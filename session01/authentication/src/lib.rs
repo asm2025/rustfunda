@@ -1,12 +1,10 @@
+use anyhow::{Result, anyhow};
 use bimap::BiMap;
 use std::{
     collections::{HashMap, HashSet},
     path::Path,
 };
-use util::{
-    Result,
-    auth::{User, UserRole},
-};
+use util::auth::{User, UserRole};
 use uuid::Uuid;
 
 pub struct UserStore {
@@ -48,8 +46,7 @@ impl UserStore {
                 map
             } else {
                 let data = std::fs::read_to_string(path)?;
-                let mut map: HashMap<Uuid, User> =
-                    serde_json::from_str(&data).map_err(|e| e.to_string())?;
+                let mut map: HashMap<Uuid, User> = serde_json::from_str(&data)?;
                 map.retain(|_, user| user.is_valid());
                 add_default_users(&mut map);
                 map
@@ -75,11 +72,11 @@ impl UserStore {
 
     pub fn add(&mut self, user: User) -> Result<()> {
         if !user.is_valid() {
-            return Err("Invalid user data".into());
+            return Err(anyhow!("Invalid user data"));
         }
 
         if self.users.contains_key(user.id()) || self.username_map.contains_left(user.username()) {
-            return Err("User already exists".into());
+            return Err(anyhow!("User already exists"));
         }
 
         self.users.insert(user.id().clone(), user.clone());
@@ -90,14 +87,14 @@ impl UserStore {
 
     pub fn update(&mut self, user: User) -> Result<()> {
         if !user.is_valid_for_update() {
-            return Err("Invalid user data".into());
+            return Err(anyhow!("Invalid user data"));
         }
 
         if let Some(existing_user) = self.users.get(user.id()) {
             if existing_user.username() != user.username()
                 && self.username_map.contains_left(user.username())
             {
-                return Err("Username already exists".into());
+                return Err(anyhow!("Username already exists"));
             }
 
             let mut user = user;
@@ -136,14 +133,14 @@ impl UserStore {
             self.username_map.remove_by_right(user.id());
             Ok(())
         } else {
-            Err("User not found".into())
+            Err(anyhow!("User not found"))
         }
     }
 
     pub fn remove_by_username(&mut self, username: &str) -> Result<()> {
         match self.username_map.get_by_left(username) {
             Some(id) => self.remove(&id.clone()),
-            None => Err("User not found".into()),
+            None => Err(anyhow!("User not found")),
         }
     }
 
@@ -184,18 +181,18 @@ impl UserStore {
 
     pub fn login(&self, username: &str, password: &str) -> Result<User> {
         if username.is_empty() || password.is_empty() {
-            return Err("Username or password cannot be empty".into());
+            return Err(anyhow!("Username or password cannot be empty"));
         }
 
         let username = username.trim().to_lowercase();
         let user = self
             .get_by_username(&username)
-            .ok_or_else(|| "User not found".to_string())?;
+            .ok_or_else(|| anyhow!("User not found"))?;
 
         if self.verify_password(password, user.password()) {
             Ok(user.clone())
         } else {
-            Err("Invalid credentials".into())
+            Err(anyhow!("Invalid credentials"))
         }
     }
 
