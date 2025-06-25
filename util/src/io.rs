@@ -1,7 +1,8 @@
 use anyhow::{Result, anyhow};
 use crossterm::{
     ExecutableCommand, cursor,
-    terminal::{Clear, ClearType},
+    event::{self, Event, KeyCode, KeyEvent},
+    terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode},
 };
 use dialoguer::{Select, theme::ColorfulTheme};
 use rpassword::read_password;
@@ -26,7 +27,7 @@ pub fn display_menu(items: &[&str], prompt: Option<&str>) -> Result<usize> {
     })
 }
 
-pub fn input(prompt: Option<&str>) -> Result<String> {
+pub fn get(prompt: Option<&str>) -> Result<String> {
     print_prompt(prompt);
 
     let mut buffer = String::new();
@@ -42,48 +43,68 @@ pub fn input(prompt: Option<&str>) -> Result<String> {
     Ok(buffer)
 }
 
-pub fn sinput(prompt: Option<&str>) -> Result<String> {
-    let value = input(prompt)?;
+pub fn get_str(prompt: Option<&str>) -> Result<String> {
+    let input = get(prompt)?;
 
-    if value.is_empty() {
+    if input.is_empty() {
         return Err(anyhow!("No input provided"));
     }
 
-    Ok(value)
+    Ok(input)
 }
 
-pub fn ninput<T>(prompt: Option<&str>) -> Result<T>
+pub fn get_char(prompt: Option<&str>) -> Result<char> {
+    print_prompt(prompt);
+    // Enable raw mode to read single characters
+    enable_raw_mode()?;
+
+    let result = loop {
+        if let Ok(Event::Key(KeyEvent { code, .. })) = event::read() {
+            match code {
+                KeyCode::Char(c) => break Ok(c),
+                KeyCode::Esc | KeyCode::Enter => break Err(anyhow!("No input provided")),
+                _ => continue,
+            }
+        }
+    };
+
+    // Disable raw mode before returning
+    disable_raw_mode()?;
+    result
+}
+
+pub fn get_numeric<T>(prompt: Option<&str>) -> Result<T>
 where
     T: std::str::FromStr,
     T::Err: std::error::Error + 'static,
 {
-    let value = sinput(prompt)?;
-    match value.parse::<T>() {
+    let input = get_str(prompt)?;
+    match input.parse::<T>() {
         Ok(number) => Ok(number),
         Err(e) => Err(anyhow!("{}", e)),
     }
 }
 
-pub fn password(prompt: Option<&str>) -> Result<String> {
+pub fn get_password(prompt: Option<&str>) -> Result<String> {
     print_prompt(prompt);
 
-    let value = read_password()?;
-    Ok(value)
+    let input = read_password()?;
+    Ok(input)
 }
 
-pub fn spassword(prompt: Option<&str>) -> Result<String> {
-    let password = password(prompt)?;
+pub fn get_password_str(prompt: Option<&str>) -> Result<String> {
+    let input = get_password(prompt)?;
 
-    if password.is_empty() {
+    if input.is_empty() {
         return Err(anyhow!("No password provided"));
     }
 
-    Ok(password)
+    Ok(input)
 }
 
 pub fn pause() {
     println!("Press any key to continue...");
-    input(None).unwrap();
+    get(None).unwrap();
 }
 
 pub fn clear_screen() -> Result<()> {

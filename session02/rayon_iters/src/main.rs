@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use rayon::prelude::*;
 use std::time::Instant;
-use util::io::{display_menu, ninput, pause};
+use util::io::{display_menu, get_numeric, pause};
 
 fn main() {
     let items = vec!["Sum", "Is prime", "Sum of prime numbers", "Exit"];
@@ -33,7 +33,7 @@ fn main() {
 }
 
 fn do_sum() -> Result<()> {
-    let input: u64 = ninput(Some("Enter a number (Leave empty to exit): ")).unwrap_or(0);
+    let input: u64 = get_numeric(Some("Enter a number (Leave empty to exit): ")).unwrap_or(0);
 
     if input < 1 {
         println!("Sum: 0. took 0 seconds");
@@ -49,7 +49,7 @@ fn do_sum() -> Result<()> {
 }
 
 fn do_prime() -> Result<()> {
-    let input: u64 = ninput(Some("Enter a number (Leave empty to exit): ")).unwrap_or(0);
+    let input: u64 = get_numeric(Some("Enter a number (Leave empty to exit): ")).unwrap_or(0);
 
     if input < 2 {
         println!("{input} is not prime. took 0 seconds");
@@ -70,7 +70,7 @@ fn do_prime() -> Result<()> {
 }
 
 fn do_sum_prime() -> Result<()> {
-    let input: u64 = ninput(Some("Enter a number (Leave empty to exit): ")).unwrap_or(0);
+    let input: u64 = get_numeric(Some("Enter a number (Leave empty to exit): ")).unwrap_or(0);
 
     if input < 1 {
         println!("Sum: 0. took 0 seconds");

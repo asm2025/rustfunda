@@ -3,7 +3,7 @@ use authentication::*;
 use std::path::Path;
 use util::{
     auth::{User, UserFormatter, UserRole},
-    io::{clear_screen, display_menu, input, password, pause, sinput, spassword},
+    io::{clear_screen, display_menu, get, get_password, get_password_str, get_str, pause},
 };
 use uuid::Uuid;
 
@@ -60,8 +60,8 @@ fn login(user_store: &UserStore) -> Result<()> {
     let mut tries = 0;
 
     loop {
-        let username = sinput(Some("Enter your username: "))?;
-        let password = password(Some("Enter your password: "))?;
+        let username = get_str(Some("Enter your username: "))?;
+        let password = get_password(Some("Enter your password: "))?;
 
         if let Ok(user) = user_store.login(&username, &password) {
             println!("{}", user_store.great_user(&user.username()));
@@ -106,7 +106,7 @@ fn list_users(user_store: &UserStore) -> Result<()> {
 }
 
 fn list_users_by_role(user_store: &UserStore) -> Result<()> {
-    let role: UserRole = sinput(Some("Enter role: "))
+    let role: UserRole = get_str(Some("Enter role: "))
         .unwrap_or("none".to_string())
         .into();
     let users = user_store.users_by_role(role);
@@ -126,10 +126,10 @@ fn list_users_by_role(user_store: &UserStore) -> Result<()> {
 }
 
 fn add_user(user_store: &mut UserStore) -> Result<()> {
-    let username = sinput(Some("Enter username: "))?;
-    let password = spassword(Some("Enter password: "))?;
-    let name = sinput(Some("Enter name (Leave empty for default): ")).unwrap_or(username.clone());
-    let role: UserRole = sinput(Some("Enter role (leave empty for default): "))
+    let username = get_str(Some("Enter username: "))?;
+    let password = get_password_str(Some("Enter password: "))?;
+    let name = get_str(Some("Enter name (Leave empty for default): ")).unwrap_or(username.clone());
+    let role: UserRole = get_str(Some("Enter role (leave empty for default): "))
         .unwrap_or("user".to_string())
         .into();
     let user = User::build().with(
@@ -146,14 +146,14 @@ fn add_user(user_store: &mut UserStore) -> Result<()> {
 }
 
 fn update_user(user_store: &mut UserStore) -> Result<()> {
-    let username = sinput(Some("Enter username to update: "))?;
+    let username = get_str(Some("Enter username to update: "))?;
     let mut user = user_store
         .get_by_username(&username)
         .cloned()
         .ok_or_else(|| anyhow!("User '{}' not found.", username))?;
-    let name = input(Some("Enter new name (leave empty to keep current): "))?;
-    let password = password(Some("Enter new password (leave empty to keep current): "))?;
-    let role: UserRole = sinput(Some("Enter new role (leave empty to keep current): "))
+    let name = get(Some("Enter new name (leave empty to keep current): "))?;
+    let password = get_password(Some("Enter new password (leave empty to keep current): "))?;
+    let role: UserRole = get_str(Some("Enter new role (leave empty to keep current): "))
         .unwrap_or("none".to_string())
         .into();
     if name.is_empty() && password.is_empty() && role == UserRole::None {
@@ -179,7 +179,7 @@ fn update_user(user_store: &mut UserStore) -> Result<()> {
 }
 
 fn remove_user(user_store: &mut UserStore) -> Result<()> {
-    let username = sinput(Some("Enter username to remove: "))?;
+    let username = get_str(Some("Enter username to remove: "))?;
 
     if user_store.remove_by_username(&username).is_ok() {
         println!("User '{}' removed successfully.", username);

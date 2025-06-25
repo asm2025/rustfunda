@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, RwLock, atomic::AtomicBool},
     thread, time,
 };
-use util::io::input;
+use util::io::get;
 
 #[derive(Debug, Clone)]
 struct Users {
@@ -60,7 +60,7 @@ fn main() {
     });
 
     loop {
-        let name = input(Some("Enter a user name to add (or press ENTER to quit): ")).unwrap();
+        let name = get(Some("Enter a user name to add (or press ENTER to quit): ")).unwrap();
         if name.is_empty() {
             break;
         }

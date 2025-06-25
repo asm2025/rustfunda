@@ -1,5 +1,5 @@
 use std::thread;
-use util::{io::ninput, threading::Signal};
+use util::{io::get_numeric, threading::Signal};
 
 fn parkable(n: usize, signal: Signal) {
     loop {
@@ -24,8 +24,8 @@ fn main() {
     }
 
     loop {
-        let input =
-            ninput::<usize>(Some("Enter a number to unpark a thread (0 to exit): ")).unwrap_or(0);
+        let input = get_numeric::<usize>(Some("Enter a number to unpark a thread (0 to exit): "))
+            .unwrap_or(0);
 
         if input == 0 {
             break;

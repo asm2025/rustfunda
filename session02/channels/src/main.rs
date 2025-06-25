@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{fmt, sync::mpsc};
-use util::{io::input, threading::Signal};
+use util::{io::get, threading::Signal};
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 enum Command {
@@ -59,7 +59,7 @@ fn main() {
     });
 
     loop {
-        let input = input(Some(">")).unwrap();
+        let input = get(Some(">")).unwrap();
         let command = Command::from(input);
 
         if let Err(ex) = tx.send(command.clone()) {

@@ -1,8 +1,8 @@
-use util::io::input;
+use util::io::get;
 
 fn main() {
     loop {
-        let input = input(Some("Enter some text (or press Enter to quit): "));
+        let input = get(Some("Enter some text (or press Enter to quit): "));
 
         match input {
             Ok(value) => {
