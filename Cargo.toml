@@ -31,4 +31,5 @@ members = [
 	"session03/hello_async",
 	"session03/hello_tokio",
 	"session03/hello_blocking",
+	"session03/tokio_testing",
 ]
