@@ -43,7 +43,7 @@ fn do_sum() -> Result<()> {
     let start = Instant::now();
     let sum = (0..=input).into_par_iter().sum::<u64>();
     let ellapsed = start.elapsed();
-    println!("Sum: {sum}. took {} seconds", ellapsed.as_secs_f64());
+    println!("Sum: {sum}. took {:.4} seconds", ellapsed.as_secs_f64());
     pause();
     Ok(())
 }
@@ -84,7 +84,7 @@ fn do_sum_prime() -> Result<()> {
         .sum::<u64>();
     let ellapsed = start.elapsed();
     println!(
-        "Sum of prime numbers between 0 and {input}: {sum}. took {} seconds",
+        "Sum of prime numbers between 0 and {input}: {sum}. took {:.4} seconds",
         ellapsed.as_secs_f64()
     );
     pause();

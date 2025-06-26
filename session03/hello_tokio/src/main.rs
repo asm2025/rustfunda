@@ -36,7 +36,7 @@ fn main() {
         }
     });
     println!(
-        "All tasks have finished in {} seconds.",
+        "All tasks have finished in {:.4} seconds.",
         now.elapsed().as_secs_f64()
     );
 }
