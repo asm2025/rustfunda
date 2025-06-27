@@ -32,8 +32,10 @@ fn raise_error() -> std::result::Result<(), std::io::Error> {
 }
 
 fn main() {
+    println!();
     println!("MyErrors use thiserror crate for creating custom errors enum type.");
     println!("It's best used for libraries so applications can catch error by type.");
+    println!();
 
     if let Err(ex) = raise_my_error() {
         println!("Got a MyError error: {}", ex);
@@ -47,6 +49,7 @@ fn main() {
         println!("Got a MyError error of type io: {}", ex);
     }
 
+    println!();
     println!("anyhow crate cares about displaying the error message rather than the error type.");
     println!("It's best used for applications but not for libraries.");
 

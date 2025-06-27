@@ -34,4 +34,6 @@ members = [
 	"session03/tokio_testing",
 	"session03/errors",
 	"session03/fileio",
+	"session03/rustclient",
+	"session03/rustserver",
 ]
