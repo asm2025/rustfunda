@@ -14,6 +14,9 @@ async fn main() -> Result<()> {
     println!();
     println!("Listening on {}", HOST);
     println!("You can use PuTTY or any TCP client to send mesages to this server.");
+    println!(
+        "If you see strange squares when first connected, try to make a RAW connection instead of Telnet."
+    );
     println!();
 
     loop {
