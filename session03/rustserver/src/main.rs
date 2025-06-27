@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
                     return;
                 }
 
-                let message = String::from_utf8_lossy(&buffer[0..n]).trim().to_string();
+                let message = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
 
                 if message.is_empty() {
                     continue;
