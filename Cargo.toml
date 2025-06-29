@@ -21,7 +21,7 @@ members = [
 	"session02/dashing",
 	"session02/parking",
 	"session02/rwlocks",
-	"session02/channels",
+	"session02/hello_channels",
 	"session02/workers",
 	"session02/shared-queue",
 	"session02/work-stealing",
@@ -36,4 +36,5 @@ members = [
 	"session03/fileio",
 	"session03/rustclient",
 	"session03/rustserver",
+	"session03/async_channels",
 ]

@@ -20,6 +20,13 @@ async fn get_my_ip() -> Result<String> {
     Ok(resp.origin)
 }
 
+async fn get_some_text() -> Result<String> {
+    const URL: &'static str = "https://httpbin.org/html";
+
+    let resp = reqwest::get(URL).await?.text().await?;
+    Ok(resp)
+}
+
 async fn get_weather() -> Result<JsonValue> {
     const URL: &'static str = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m&current=temperature_2m,relative_humidity_2m,rain,showers,snowfall&timezone=Africa%2FCairo";
 
@@ -71,8 +78,11 @@ async fn connect_to_tcp() -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let ip = get_my_ip().await.unwrap();
+    let ip = get_my_ip().await?;
     println!("My IP address: {ip}");
+
+    let example_text = get_some_text().await?;
+    println!("{example_text}");
 
     println!("My weathr forcast:");
     let weather = get_weather().await?;
