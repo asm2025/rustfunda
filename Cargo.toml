@@ -37,4 +37,5 @@ members = [
 	"session03/rustclient",
 	"session03/rustserver",
 	"session03/async_channels",
+	"session03/tokio_select",
 ]

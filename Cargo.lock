@@ -1722,8 +1722,6 @@ name = "rustserver"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "serde",
- "serde_json",
  "tokio",
 ]
 
@@ -2148,6 +2146,13 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
+name = "tokio_select"
+version = "0.1.0"
+dependencies = [
  "tokio",
 ]
 
