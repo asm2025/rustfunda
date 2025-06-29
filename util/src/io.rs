@@ -6,7 +6,10 @@ use crossterm::{
 };
 use dialoguer::{Select, theme::ColorfulTheme};
 use rpassword::read_password;
-use std::io::{Write, stdin, stdout};
+use std::{
+    io::{Write, stdin, stdout},
+    time::Duration,
+};
 
 pub fn display_menu(items: &[&str], prompt: Option<&str>) -> Result<usize> {
     clear_screen()?;
@@ -57,6 +60,7 @@ pub fn get_char(prompt: Option<&str>) -> Result<char> {
     print_prompt(prompt);
     // Enable raw mode to read single characters
     enable_raw_mode()?;
+    clear_keys();
 
     let result = loop {
         if let Ok(Event::Key(KeyEvent { code, .. })) = event::read() {
@@ -70,6 +74,25 @@ pub fn get_char(prompt: Option<&str>) -> Result<char> {
 
     // Disable raw mode before returning
     disable_raw_mode()?;
+    println!();
+    result
+}
+
+pub fn get_key(prompt: Option<&str>) -> Result<KeyEvent> {
+    print_prompt(prompt);
+    // Enable raw mode to read single characters
+    enable_raw_mode()?;
+    clear_keys();
+
+    let result = loop {
+        if let Ok(Event::Key(key_event)) = event::read() {
+            break Ok(key_event);
+        }
+    };
+
+    // Disable raw mode before returning
+    disable_raw_mode()?;
+    println!();
     result
 }
 
@@ -103,8 +126,8 @@ pub fn get_password_str(prompt: Option<&str>) -> Result<String> {
 }
 
 pub fn pause() {
-    println!("Press any key to continue...");
-    get(None).unwrap();
+    print!("Press any key to continue...");
+    get_key(None).unwrap();
 }
 
 pub fn clear_screen() -> Result<()> {
@@ -113,6 +136,12 @@ pub fn clear_screen() -> Result<()> {
         .execute(Clear(ClearType::All))?
         .execute(cursor::MoveTo(0, 0))?;
     Ok(())
+}
+
+pub fn clear_keys() {
+    while let Ok(_) = event::poll(Duration::from_secs(0)) {
+        let _ = event::read();
+    }
 }
 
 fn print_prompt(prompt: Option<&str>) {

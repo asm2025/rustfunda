@@ -38,4 +38,6 @@ members = [
 	"session03/rustserver",
 	"session03/async_channels",
 	"session03/tokio_select",
+	"session03/crossbeam_select",
+	"session03/keyevent_listener",
 ]

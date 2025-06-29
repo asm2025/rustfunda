@@ -1,8 +1,9 @@
 [package]
-name = "tokio_select"
+name = "crossbeam_select"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 util ={ path = "../../util" }
 tokio ={ version = "1", features = ["full"] }
+crossbeam = "0"
