@@ -1,7 +1,12 @@
-use anyhow::{Result, anyhow};
+mod key_listener;
+pub use key_listener::*;
+
+pub use crossterm::*;
+pub use tokio::*;
+
+use crate::{Result, error::RmxError};
 use crossterm::{
-    ExecutableCommand, cursor,
-    event::{self, Event, KeyCode, KeyEvent},
+    event::{Event, KeyCode, KeyEvent},
     terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode},
 };
 use dialoguer::{Select, theme::ColorfulTheme};
@@ -22,7 +27,8 @@ pub fn display_menu(items: &[&str], prompt: Option<&str>) -> Result<usize> {
         .with_prompt(prompt)
         .items(items)
         .default(0)
-        .interact()?;
+        .interact()
+        .unwrap();
     Ok(if selection == items.len() - 1 {
         0
     } else {
@@ -50,7 +56,7 @@ pub fn get_str(prompt: Option<&str>) -> Result<String> {
     let input = get(prompt)?;
 
     if input.is_empty() {
-        return Err(anyhow!("No input provided"));
+        return Err(RmxError::NoInput);
     }
 
     Ok(input)
@@ -66,7 +72,7 @@ pub fn get_char(prompt: Option<&str>) -> Result<char> {
         if let Ok(Event::Key(KeyEvent { code, .. })) = event::read() {
             match code {
                 KeyCode::Char(c) => break Ok(c),
-                KeyCode::Esc | KeyCode::Enter => break Err(anyhow!("No input provided")),
+                KeyCode::Esc | KeyCode::Enter => break Err(RmxError::NoInput),
                 _ => continue,
             }
         }
@@ -104,7 +110,7 @@ where
     let input = get_str(prompt)?;
     match input.parse::<T>() {
         Ok(number) => Ok(number),
-        Err(e) => Err(anyhow!("{}", e)),
+        Err(e) => Err(RmxError::Invalid(e.to_string())),
     }
 }
 
@@ -119,7 +125,7 @@ pub fn get_password_str(prompt: Option<&str>) -> Result<String> {
     let input = get_password(prompt)?;
 
     if input.is_empty() {
-        return Err(anyhow!("No password provided"));
+        return Err(RmxError::NoInput);
     }
 
     Ok(input)

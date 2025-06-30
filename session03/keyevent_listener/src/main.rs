@@ -1,37 +1,17 @@
-use crossterm::{
-    event::{self, Event, KeyCode},
-    terminal::{disable_raw_mode, enable_raw_mode},
+use crossterm::event::KeyCode;
+use std::{thread, time::Duration};
+use util::{
+    Result,
+    io::{KeyListener, sync::mpsc::error::TryRecvError},
 };
-use std::{sync::mpsc, thread, time::Duration};
 
-fn main() {
-    let (tx, rx) = mpsc::channel();
-
-    // Spawn key listener thread
-    thread::spawn(move || {
-        enable_raw_mode().unwrap();
-
-        loop {
-            if let Ok(Event::Key(key)) = event::read() {
-                if !key.is_press() {
-                    continue;
-                }
-
-                if tx.send(key).is_err() {
-                    // Main thread dropped
-                    break;
-                }
-            }
-        }
-
-        disable_raw_mode().unwrap();
-    });
-
+fn main() -> Result<()> {
+    let mut key_listener = KeyListener::new()?;
     println!("Press keys (ESC to quit):");
 
     // Main thread continues without blocking
     loop {
-        match rx.try_recv() {
+        match key_listener.try_recv() {
             Ok(key) => match key.code {
                 KeyCode::Esc => break,
                 KeyCode::Char(c) => {
@@ -43,7 +23,7 @@ fn main() {
                 }
                 _ => println!("Pressed: {:?} with {:?}", key.code, key.modifiers),
             },
-            Err(mpsc::TryRecvError::Disconnected) => {
+            Err(TryRecvError::Disconnected) => {
                 // Listener is disconnected
                 break;
             }
@@ -52,4 +32,6 @@ fn main() {
             }
         }
     }
+
+    Ok(())
 }

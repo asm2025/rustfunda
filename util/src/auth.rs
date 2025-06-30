@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use crate::{Result, error::RmxError};
 use fake::{
     Dummy,
     faker::{
@@ -240,7 +240,9 @@ impl UserFormatter {
 
     pub fn with_columns(columns: Vec<Column>) -> Result<Self> {
         if columns.is_empty() {
-            return Err(anyhow!("Columns cannot be empty"));
+            return Err(RmxError::InvalidOperation(
+                "Columns cannot be empty".to_string(),
+            ));
         }
 
         Ok(Self { columns })
