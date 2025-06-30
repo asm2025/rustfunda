@@ -1,12 +1,10 @@
 mod key_listener;
 pub use key_listener::*;
 
-pub use crossterm::*;
-pub use tokio::*;
-
 use crate::{Result, error::RmxError};
 use crossterm::{
-    event::{Event, KeyCode, KeyEvent},
+    ExecutableCommand, cursor,
+    event::{self, Event, KeyCode, KeyEvent},
     terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode},
 };
 use dialoguer::{Select, theme::ColorfulTheme};
