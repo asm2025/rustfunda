@@ -1,9 +1,6 @@
 use crossterm::event::KeyCode;
 use std::{thread, time::Duration};
-use util::{
-    Result,
-    io::{KeyListener, sync::mpsc::error::TryRecvError},
-};
+use util::{Result, io::KeyListener, sync::mpsc::error::TryRecvError};
 
 fn main() -> Result<()> {
     let mut key_listener = KeyListener::new()?;
