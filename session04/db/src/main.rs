@@ -14,6 +14,8 @@ async fn main() -> Result<()> {
 
     let db_url = std::env::var("DATABASE_URL")?;
     let pool = sqlx::SqlitePool::connect(&db_url).await?;
+    sqlx::migrate!("./migrations").run(&pool).await?;
+
     // let messages = sqlx::query("SELECT id, message FROM messages")
     //     .map(|row: sqlx::sqlite::SqliteRow| {
     //         let id: i64 = row.get(0);
