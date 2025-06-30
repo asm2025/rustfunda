@@ -21,10 +21,6 @@ fn main() {
                     // Main thread dropped
                     break;
                 }
-
-                if key.code == KeyCode::Esc {
-                    break;
-                }
             }
         }
 
