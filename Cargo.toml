@@ -40,4 +40,8 @@ members = [
 	"session03/tokio_select",
 	"session03/crossbeam_select",
 	"session03/keyevent_listener",
+	"session03/recursion", 
+	"session04",
+	"session04/logspan",
+	"session04/db",
 ]
