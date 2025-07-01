@@ -1,0 +1,13 @@
+[package]
+name = "seaormdb"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sea-orm = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+sea-orm-migration = "1"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+dotenvy = "0"
+chrono = { version = "0", features = ["serde"] }
+async-trait = "0"

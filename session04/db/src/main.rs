@@ -1,16 +1,26 @@
 use anyhow::Result;
+use dotenvy::dotenv;
 use futures::TryStreamExt;
-use sqlx::{FromRow, Row};
+use sqlx::{FromRow /*, Row */};
 
 #[derive(Debug, FromRow)]
 struct Message {
-    id: i64,
-    message: String,
+    pub id: i64,
+    pub message: String,
+}
+
+async fn update_message(id: i64, message: &str, pool: &sqlx::SqlitePool) -> Result<()> {
+    sqlx::query("UPDATE messages SET message = ?  WHERE id = ?")
+        .bind(message)
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv::dotenv()?;
+    dotenv().ok();
 
     let db_url = std::env::var("DATABASE_URL")?;
     let pool = sqlx::SqlitePool::connect(&db_url).await?;
@@ -36,6 +46,9 @@ async fn main() -> Result<()> {
     for message in messages {
         println!("{message:?}");
     }
+
+    println!("Updating message...");
+    update_message(4, "Updated message", &pool).await?;
 
     println!("Fetch using stream...");
     let mut stream = sqlx::query_as::<_, Message>("SELECT id, message FROM messages").fetch(&pool);
