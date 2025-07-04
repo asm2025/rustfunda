@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Rust Web Service</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                background: #f4f6fa;
+            }
+            .hero {
+                background: #2d6cdf;
+                color: #fff;
+                padding: 40px 20px;
+                text-align: center;
+            }
+            .container {
+                max-width: 600px;
+                margin: 40px auto;
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+                padding: 32px 24px;
+                text-align: center;
+            }
+            button {
+                margin: 12px 8px;
+                padding: 12px 28px;
+                font-size: 1rem;
+                border: none;
+                border-radius: 6px;
+                background: #2d6cdf;
+                color: #fff;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            button:hover {
+                background: #1a4fa0;
+            }
+            pre {
+                background: #f0f2f7;
+                padding: 16px;
+                border-radius: 6px;
+                text-align: left;
+                overflow-x: auto;
+                margin-top: 24px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="hero">
+            <h1>Rust Web Service HTML Page</h1>
+            <p>Interact with the API at <strong>http://localhost:3000</strong></p>
+        </div>
+        <div class="container">
+            <button onclick="getHtmlContent()">Get HTML Content</button>
+            <button onclick="getJsonContent()">Get JSON Content</button>
+            <button onclick="postJsonContent()">Post JSON Content</button>
+            <pre id="output">Click a button to see the result here...</pre>
+        </div>
+        <script>
+            const BASE_URL = "http://localhost:3000";
+            const output = document.getElementById("output");
+
+            function getHtmlContent() {
+                fetch(`${BASE_URL}/html`)
+                    .then((res) => res.text())
+                    .then((data) => {
+                        output.innerHTML = data; // Use innerHTML to render HTML content
+                    })
+                    .catch((err) => {
+                        output.textContent = "Error: " + err;
+                    });
+            }
+
+            function getJsonContent() {
+                fetch(`${BASE_URL}/json`)
+                    .then((res) => res.json())
+                    .then((data) => {
+                        output.textContent = JSON.stringify(data, null, 2);
+                    })
+                    .catch((err) => {
+                        output.textContent = "Error: " + err;
+                    });
+            }
+
+            function postJsonContent() {
+                fetch(`${BASE_URL}/post`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        message: "Hello from POST!",
+                        timestamp: new Date().toISOString(),
+                        data: { test: true },
+                    }),
+                })
+                    .then((res) => res.json())
+                    .then((data) => {
+                        output.textContent = JSON.stringify(data, null, 2);
+                    })
+                    .catch((err) => {
+                        output.textContent = "Error: " + err;
+                    });
+            }
+        </script>
+    </body>
+</html>

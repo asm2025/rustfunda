@@ -45,4 +45,5 @@ members = [
 	"session04/logspan",
 	"session04/db",
 	"session04/seaormdb",
+	"session04/web_service",
 ]
