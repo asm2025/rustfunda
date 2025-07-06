@@ -48,11 +48,18 @@
                 margin-top: 24px;
             }
         </style>
+        <script lang="javascript">
+            document.addEventListener("DOMContentLoaded", () => {
+            	const hostUriElement = document.getElementById("hostUri");
+            	const hostUri = window.location.origin; // Get the base URL of the current page
+            	hostUriElement.textContent = hostUri;
+            });
+        </script>
     </head>
     <body>
         <div class="hero">
             <h1>Rust Web Service HTML Page</h1>
-            <p>Interact with the API at <strong>http://??:3000</strong></p>
+            <p>Interact with the API at <strong id="hostUri"></strong></p>
         </div>
         <div class="container">
             <button onclick="getHtmlContent()">Get HTML Content</button>
