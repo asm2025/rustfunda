@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
 
 // Setup the router
 fn create_router() -> Router {
-    let static_path = std::env::current_dir().unwrap().join("src/www");
+    let static_path = std::env::current_dir().unwrap().join("wwwroot");
     Router::new()
         .route("/html", get(get_html))
         .route("/json", get(get_json))
