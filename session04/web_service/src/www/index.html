@@ -52,7 +52,7 @@
     <body>
         <div class="hero">
             <h1>Rust Web Service HTML Page</h1>
-            <p>Interact with the API at <strong>http://localhost:3000</strong></p>
+            <p>Interact with the API at <strong>http://??:3000</strong></p>
         </div>
         <div class="container">
             <button onclick="getHtmlContent()">Get HTML Content</button>
@@ -61,11 +61,10 @@
             <pre id="output">Click a button to see the result here...</pre>
         </div>
         <script>
-            const BASE_URL = "http://localhost:3000";
             const output = document.getElementById("output");
 
             function getHtmlContent() {
-                fetch(`${BASE_URL}/html`)
+                fetch("/html")
                     .then((res) => res.text())
                     .then((data) => {
                         output.innerHTML = data; // Use innerHTML to render HTML content
@@ -76,7 +75,7 @@
             }
 
             function getJsonContent() {
-                fetch(`${BASE_URL}/json`)
+                fetch("/json")
                     .then((res) => res.json())
                     .then((data) => {
                         output.textContent = JSON.stringify(data, null, 2);
@@ -87,7 +86,7 @@
             }
 
             function postJsonContent() {
-                fetch(`${BASE_URL}/post`, {
+                fetch("/post", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
