@@ -5,14 +5,11 @@ use axum::{
     response::{Html, IntoResponse, Json as JsonResponse},
     routing::{get, post},
 };
-use serde_json::{Value, json};
-use std::sync::OnceLock;
-
-static HTML_CACHE: OnceLock<String> = OnceLock::new();
+use serde_json::{Value as JsonValue, json};
+use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    std::env::set_current_dir("./src/www")?;
     tracing_subscriber::fmt::init();
 
     let app = create_router();
@@ -23,18 +20,12 @@ async fn main() -> Result<()> {
 
 // Setup the router
 fn create_router() -> Router {
+    let static_path = std::env::current_dir().unwrap().join("src/www");
     Router::new()
-        .route("/", get(get_home))
         .route("/html", get(get_html))
         .route("/json", get(get_json))
         .route("/post", post(post_json))
-}
-
-async fn get_home() -> Html<String> {
-    let content = HTML_CACHE
-        .get_or_init(|| std::fs::read_to_string("./index.html").expect("Failed to load page"))
-        .to_owned();
-    Html(content)
+        .fallback_service(ServeDir::new(static_path))
 }
 
 async fn get_html() -> Html<String> {
@@ -42,7 +33,7 @@ async fn get_html() -> Html<String> {
     Html(content)
 }
 
-async fn get_json() -> Json<Value> {
+async fn get_json() -> Json<JsonValue> {
     let data = json!({
         "message": "Hello, JSON!",
         "status": "success"
@@ -50,7 +41,7 @@ async fn get_json() -> Json<Value> {
     Json(data)
 }
 
-async fn post_json(payload: Json<Value>) -> impl IntoResponse {
+async fn post_json(payload: Json<JsonValue>) -> impl IntoResponse {
     // Extract the JSON value from the payload
     let json_data = payload.0;
 
@@ -81,7 +72,7 @@ async fn post_json(payload: Json<Value>) -> impl IntoResponse {
     }
 }
 
-fn validate_json(json_input: &Value) -> Result<Value, ValidationError> {
+fn validate_json(json_input: &JsonValue) -> Result<JsonValue, ValidationError> {
     match serde_json::to_string(json_input) {
         Ok(json_string) => match serde_json::from_str(&json_string) {
             Ok(validated) => Ok(validated),
