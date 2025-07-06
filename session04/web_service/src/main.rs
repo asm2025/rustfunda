@@ -26,7 +26,7 @@ fn create_router() -> Router {
         .route("/html", get(get_html))
         .route("/json", get(get_json))
         .route("/post", post(post_json))
-        .fallback_service(ServeDir::new(static_path))
+        .fallback_service(ServeDir::new(static_path).append_index_html_on_directories(true))
 }
 
 async fn get_html() -> Html<String> {

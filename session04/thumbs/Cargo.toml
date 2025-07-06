@@ -1,0 +1,23 @@
+[package]
+name = "thumbs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+axum = { version = "0", features = ["http2", "multipart"] }
+tower = "0"
+tower-http = { version = "0", features = ["fs"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["alloc"]}
+tracing = "0"
+tracing-subscriber = "0"
+sea-orm = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+sea-orm-migration = "1"
+dotenvy = "0"
+futures = "0"
+tokio-util = { version = "0", features = ["io"] }
+image = "0"
+chrono = { version = "0", features = ["serde"] }
+async-trait = "0"
