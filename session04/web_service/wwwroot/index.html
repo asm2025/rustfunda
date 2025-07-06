@@ -7,9 +7,7 @@
         <link rel="stylesheet" href="style.css" />
         <script lang="javascript">
             document.addEventListener("DOMContentLoaded", () => {
-            	const hostUriElement = document.getElementById("hostUri");
-            	const hostUri = window.location.origin; // Get the base URL of the current page
-            	hostUriElement.textContent = hostUri;
+            	document.getElementById("hostUri").textContent = window.location.origin;
             });
         </script>
     </head>
