@@ -1,9 +1,8 @@
 use anyhow::Result;
-use axum::Router;
-use chrono::{DateTime, Utc};
+use axum::{Extension, Router};
 use dotenvy::dotenv;
-use sea_orm::{ConnectOptions, Database, DatabaseConnection};
-use serde::{Deserialize, Serialize};
+use sea_orm::{prelude::*, *};
+use sea_orm_migration::prelude::*;
 use serde_json::{Value as JsonValue, json};
 use std::{
     fs,
@@ -13,7 +12,9 @@ use std::{
 use tower_http::services::ServeDir;
 
 mod entities;
-use entities::{image, image_tag, tag};
+use entities::prelude::*;
+// > sea-orm-cli migrate init
+use migration::{Migrator, MigratorTrait};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,10 +25,10 @@ async fn main() -> Result<()> {
 
     // Setup the database connection
     let db_url = std::env::var("DATABASE_URL")?;
-    let pool = setup_database(&db_url).await?;
+    let db = setup_database(&db_url).await?;
     tracing::info!("Database connection established.");
 
-    let app = create_router();
+    let app = create_router().layer(Extension(db));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await?;
 
@@ -44,6 +45,7 @@ async fn setup_database(db_url: &str) -> Result<DatabaseConnection> {
             if !parent.as_os_str().is_empty() {
                 // Create the directory if it doesn't exist
                 fs::create_dir_all(parent)?;
+                tracing::info!("Created directory for database: {}", parent.display());
             }
         }
     }
@@ -57,9 +59,13 @@ async fn setup_database(db_url: &str) -> Result<DatabaseConnection> {
         .max_lifetime(Duration::from_secs(8));
 
     // Connect to the database
-    Database::connect(opt)
-        .await
-        .map_err(|e| anyhow::anyhow!("Failed to connect to database. {}", e))
+    let db = Database::connect(opt).await?;
+    tracing::info!("Connected to the database at {}", db_url);
+
+    // Apply migrations
+    Migrator::up(&db, None).await?;
+
+    Ok(db)
 }
 
 // Setup the router

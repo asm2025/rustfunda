@@ -21,3 +21,4 @@ tokio-util = { version = "0", features = ["io"] }
 image = "0"
 chrono = { version = "0", features = ["serde"] }
 async-trait = "0"
+migration = { path = "./migration" }

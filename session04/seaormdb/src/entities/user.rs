@@ -1,8 +1,6 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use sea_orm::{
-    ActiveModelBehavior, ActiveModelTrait, ConnectionTrait, DbErr, Set, entity::prelude::*,
-};
+use sea_orm::{Set, prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "users")]

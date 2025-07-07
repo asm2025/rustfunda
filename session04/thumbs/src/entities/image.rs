@@ -1,5 +1,6 @@
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use sea_orm::entity::prelude::*;
+use sea_orm::{Set, prelude::*};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
@@ -38,4 +39,24 @@ impl Related<Entity> for super::image_tag::Entity {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+#[async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    fn new() -> Self {
+        let now = Utc::now();
+        Self {
+            created_at: Set(now),
+            updated_at: Set(now),
+            ..ActiveModelTrait::default()
+        }
+    }
+
+    async fn before_save<C>(mut self, _db: &C, insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        if !insert {
+            self.updated_at = Set(Utc::now());
+        }
+        Ok(self)
+    }
+}
