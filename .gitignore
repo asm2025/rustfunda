@@ -1,4 +1,4 @@
 /target
 /session03/fileio/warandpeace.txt
-session04/db/hello.db
-session04/thumbs/data/images.db
+*.db
+
