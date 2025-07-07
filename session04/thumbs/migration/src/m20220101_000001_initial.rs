@@ -48,6 +48,7 @@ impl MigrationTrait for Migration {
             .create_index(
                 Index::create()
                     .name("idx-images-filename")
+                    .if_not_exists()
                     .table(Images::Table)
                     .col(Images::Filename)
                     .to_owned(),
@@ -57,6 +58,7 @@ impl MigrationTrait for Migration {
             .create_index(
                 Index::create()
                     .name("idx-images-mime_type")
+                    .if_not_exists()
                     .table(Images::Table)
                     .col(Images::MimeType)
                     .to_owned(),
@@ -66,6 +68,7 @@ impl MigrationTrait for Migration {
             .create_index(
                 Index::create()
                     .name("idx-images-created_at")
+                    .if_not_exists()
                     .table(Images::Table)
                     .col(Images::CreatedAt)
                     .to_owned(),
@@ -75,6 +78,7 @@ impl MigrationTrait for Migration {
             .create_index(
                 Index::create()
                     .name("idx-images-updated_at")
+                    .if_not_exists()
                     .table(Images::Table)
                     .col(Images::UpdatedAt)
                     .to_owned(),
@@ -129,26 +133,8 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
-        // Create indexes for image_tags junction table
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx-image_tags-image_id")
-                    .table(ImageTags::Table)
-                    .col(ImageTags::ImageId)
-                    .to_owned(),
-            )
-            .await?;
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx-image_tags-tag_id")
-                    .table(ImageTags::Table)
-                    .col(ImageTags::TagId)
-                    .to_owned(),
-            )
-            .await?;
 
+        // Insert default tags
         let default_tags = [
             "landscape",
             "portrait",
@@ -163,17 +149,18 @@ impl MigrationTrait for Migration {
         ];
         let db = manager.get_connection();
         let backend = db.get_database_backend();
-        let mut insert = Query::insert();
-        insert
+        let mut insert_stmt = Query::insert()
             .into_table(Tags::Table)
-            .columns(vec![Tags::Name])
-            .on_conflict(OnConflict::column(Tags::Name).do_nothing().to_owned());
+            .columns([Tags::Name])
+            .to_owned();
 
-        for tag in &default_tags {
-            insert.values_panic(vec![(*tag).into()]);
+        for tag in default_tags {
+            insert_stmt.values([tag.into()]).unwrap();
         }
 
-        db.execute(backend.build(&insert)).await?;
+        let insert_stmt =
+            insert_stmt.on_conflict(OnConflict::column(Tags::Name).do_nothing().to_owned());
+        db.execute(backend.build(insert_stmt)).await?;
 
         Ok(())
     }
