@@ -55,7 +55,7 @@ async fn main() -> Result<()> {
     let filename = match std::env::current_dir() {
         Ok(path) => {
             println!("path: {}", path.display());
-            path.join("warandpeace.txt")
+            path.join("data/warandpeace.txt")
         }
         _ => {
             println!("Could not get the current path!");
