@@ -30,16 +30,8 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Images::Width).integer())
                     .col(ColumnDef::new(Images::Height).integer())
                     .col(ColumnDef::new(Images::AltText).string())
-                    .col(
-                        ColumnDef::new(Images::CreatedAt)
-                            .timestamp_with_time_zone()
-                            .not_null(),
-                    )
-                    .col(
-                        ColumnDef::new(Images::UpdatedAt)
-                            .timestamp_with_time_zone()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(Images::CreatedAt).timestamp().not_null())
+                    .col(ColumnDef::new(Images::UpdatedAt).timestamp().not_null())
                     .to_owned(),
             )
             .await?;

@@ -60,3 +60,8 @@ impl ActiveModelBehavior for ActiveModel {
         Ok(self)
     }
 }
+
+pub use ActiveModel as ImageModelDto;
+pub use Column as ImageColumn;
+pub use Entity as Image;
+pub use Model as ImageModel;

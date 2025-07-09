@@ -27,3 +27,8 @@ pub enum Relation {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+pub use ActiveModel as ImageTagModelDto;
+pub use Column as ImageTagColumn;
+pub use Entity as ImageTag;
+pub use Model as ImageTagModel;

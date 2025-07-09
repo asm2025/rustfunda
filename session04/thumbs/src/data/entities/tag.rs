@@ -32,3 +32,8 @@ impl Related<Entity> for super::image_tag::Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+pub use ActiveModel as TagModelDto;
+pub use Column as TagColumn;
+pub use Entity as Tag;
+pub use Model as TagModel;

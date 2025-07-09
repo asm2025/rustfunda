@@ -1,0 +1,93 @@
+2025-07-09T00:04:02.126407Z  INFO thumbs: Starting thumbs...
+2025-07-09T00:04:02.127031Z  INFO thumbs: Configuring database
+2025-07-09T00:04:02.139461Z  INFO thumbs: Connected to the database at sqlite://data/images.db
+2025-07-09T00:04:02.139961Z  INFO thumbs: Applying migrations...
+2025-07-09T00:04:02.143830Z  INFO sea_orm_migration::migrator: Applying all pending migrations
+2025-07-09T00:04:02.151056Z  INFO sea_orm_migration::migrator: No pending migrations
+2025-07-09T00:04:02.151562Z  INFO thumbs: Migrations applied successfully.
+2025-07-09T00:04:02.152025Z  INFO thumbs: Database configured successfully.
+2025-07-09T00:04:02.152471Z  INFO thumbs: Configuring application
+2025-07-09T00:04:02.152940Z  INFO thumbs: Configuring router
+2025-07-09T00:04:02.154374Z  INFO thumbs: Application configured successfully.
+2025-07-09T00:04:02.154796Z  INFO thumbs: Starting server
+2025-07-09T00:04:02.159844Z  INFO thumbs: Server listening on http://localhost:3000
+2025-07-09T00:04:31.699232Z TRACE axum::serve: connection 127.0.0.1:58788 accepted
+2025-07-09T00:04:31.700155Z TRACE axum::serve: connection 127.0.0.1:58789 accepted
+2025-07-09T00:04:31.701205Z TRACE axum::rejection: rejecting request status=500 body="Missing request extension: Extension of type `alloc::sync::Arc<dyn thumbs::data::repositories::image_repository::IImageRepository + core::marker::Send + core::marker::Sync>` was not found. Perhaps you forgot to add it? See `axum::Extension`." rejection_type="axum::extract::rejection::MissingExtension"
+2025-07-09T00:04:31.964707Z TRACE axum::serve: connection 127.0.0.1:58790 accepted
+2025-07-09T00:11:37.513208Z  INFO thumbs: Starting thumbs...
+2025-07-09T00:11:37.513801Z  INFO thumbs: Configuring database
+2025-07-09T00:11:37.527465Z  INFO thumbs: Connected to the database at sqlite://data/images.db
+2025-07-09T00:11:37.527866Z  INFO thumbs: Applying migrations...
+2025-07-09T00:11:37.531905Z  INFO sea_orm_migration::migrator: Applying all pending migrations
+2025-07-09T00:11:37.540263Z  INFO sea_orm_migration::migrator: No pending migrations
+2025-07-09T00:11:37.540839Z  INFO thumbs: Migrations applied successfully.
+2025-07-09T00:11:37.541279Z  INFO thumbs: Database configured successfully.
+2025-07-09T00:11:37.541707Z  INFO thumbs: Configuring application
+2025-07-09T00:11:37.542100Z  INFO thumbs: Configuring router
+2025-07-09T00:11:37.543426Z  INFO thumbs: Application configured successfully.
+2025-07-09T00:11:37.543990Z  INFO thumbs: Starting server
+2025-07-09T00:11:37.551988Z  INFO thumbs: Server listening on http://localhost:3000
+2025-07-09T00:11:45.400414Z TRACE axum::serve: connection 127.0.0.1:58824 accepted
+2025-07-09T00:11:45.401581Z TRACE axum::serve: connection 127.0.0.1:58825 accepted
+2025-07-09T00:11:45.658493Z TRACE axum::serve: connection 127.0.0.1:58826 accepted
+2025-07-09T01:12:57.378748Z  INFO thumbs: Starting thumbs...
+2025-07-09T01:12:57.379239Z  INFO thumbs: Configuring database
+2025-07-09T01:12:57.391246Z  INFO thumbs: Connected to the database at sqlite://data/images.db
+2025-07-09T01:12:57.391721Z  INFO thumbs: Applying migrations...
+2025-07-09T01:12:57.395854Z  INFO sea_orm_migration::migrator: Applying all pending migrations
+2025-07-09T01:12:57.402568Z  INFO sea_orm_migration::migrator: No pending migrations
+2025-07-09T01:12:57.403068Z  INFO thumbs: Migrations applied successfully.
+2025-07-09T01:12:57.403624Z  INFO thumbs: Database configured successfully.
+2025-07-09T01:12:57.404097Z  INFO thumbs: Configuring application
+2025-07-09T01:12:57.404617Z  INFO thumbs: Configuring router
+2025-07-09T01:12:57.405839Z  INFO thumbs: Application configured successfully.
+2025-07-09T01:12:57.406289Z  INFO thumbs: Starting server
+2025-07-09T01:12:57.414889Z  INFO thumbs: Server listening on http://localhost:3000
+2025-07-09T01:13:24.656662Z TRACE axum::serve: connection 127.0.0.1:58918 accepted
+2025-07-09T01:13:24.657840Z TRACE axum::serve: connection 127.0.0.1:58919 accepted
+2025-07-09T01:13:24.916838Z TRACE axum::serve: connection 127.0.0.1:58920 accepted
+2025-07-09T01:52:01.527821Z  INFO thumbs: Starting thumbs...
+2025-07-09T01:52:01.528316Z  INFO thumbs: Configuring database
+2025-07-09T01:52:01.539132Z  INFO thumbs: Connected to the database at sqlite://data/images.db
+2025-07-09T01:52:01.539703Z  INFO thumbs: Applying migrations...
+2025-07-09T01:52:01.542847Z  INFO sea_orm_migration::migrator: Applying all pending migrations
+2025-07-09T01:52:01.550266Z  INFO sea_orm_migration::migrator: No pending migrations
+2025-07-09T01:52:01.550855Z  INFO thumbs: Migrations applied successfully.
+2025-07-09T01:52:01.551395Z  INFO thumbs: Database configured successfully.
+2025-07-09T01:52:01.551798Z  INFO thumbs: Configuring application
+2025-07-09T01:52:01.552202Z  INFO thumbs: Configuring router
+2025-07-09T02:08:57.795655Z  INFO thumbs: Starting thumbs...
+2025-07-09T02:08:57.796075Z  INFO thumbs: Configuring database
+2025-07-09T02:08:57.807128Z  INFO thumbs: Connected to the database at sqlite://data/images.db
+2025-07-09T02:08:57.807682Z  INFO thumbs: Applying migrations...
+2025-07-09T02:08:57.811507Z  INFO sea_orm_migration::migrator: Applying all pending migrations
+2025-07-09T02:08:57.818517Z  INFO sea_orm_migration::migrator: No pending migrations
+2025-07-09T02:08:57.818996Z  INFO thumbs: Migrations applied successfully.
+2025-07-09T02:08:57.819387Z  INFO thumbs: Database configured successfully.
+2025-07-09T02:08:57.819765Z  INFO thumbs: Configuring application
+2025-07-09T02:08:57.820114Z  INFO thumbs: Configuring router
+2025-07-09T02:08:57.821570Z  INFO thumbs: Application configured successfully.
+2025-07-09T02:08:57.822070Z  INFO thumbs: Starting server
+2025-07-09T02:08:57.827143Z  INFO thumbs: Server listening on http://localhost:3000
+2025-07-09T02:09:08.186464Z TRACE axum::serve: connection 127.0.0.1:59040 accepted
+2025-07-09T02:09:08.442169Z TRACE axum::serve: connection 127.0.0.1:59041 accepted
+2025-07-09T11:13:33.729607Z  INFO thumbs: Starting thumbs...
+2025-07-09T11:13:33.730114Z  INFO thumbs: Configuring database
+2025-07-09T11:13:33.745164Z  INFO thumbs: Connected to the database at sqlite://data/images.db
+2025-07-09T11:13:33.745566Z  INFO thumbs: Applying migrations...
+2025-07-09T11:13:33.749637Z  INFO sea_orm_migration::migrator: Applying all pending migrations
+2025-07-09T11:13:33.757558Z  INFO sea_orm_migration::migrator: No pending migrations
+2025-07-09T11:13:33.757978Z  INFO thumbs: Migrations applied successfully.
+2025-07-09T11:13:33.758359Z  INFO thumbs: Database configured successfully.
+2025-07-09T11:13:33.758733Z  INFO thumbs: Configuring application
+2025-07-09T11:13:33.759145Z  INFO thumbs: Configuring router
+2025-07-09T11:13:33.760970Z  INFO thumbs: Application configured successfully.
+2025-07-09T11:13:33.761347Z  INFO thumbs: Starting server
+2025-07-09T11:13:33.766473Z  INFO thumbs: Server listening on http://localhost:3000
+2025-07-09T11:16:23.078341Z TRACE axum::serve: connection 127.0.0.1:51139 accepted
+2025-07-09T11:16:23.341414Z TRACE axum::serve: connection 127.0.0.1:51140 accepted
+2025-07-09T11:16:24.046592Z TRACE axum::rejection: rejecting request status=400 body="Invalid URL: Cannot parse `favicon.ico` to a `i64`" rejection_type="axum::extract::path::FailedToDeserializePathParams"
+2025-07-09T11:16:30.871274Z TRACE axum::rejection: rejecting request status=400 body="Invalid URL: Cannot parse `tags` to a `i64`" rejection_type="axum::extract::path::FailedToDeserializePathParams"
+2025-07-09T11:16:31.015702Z TRACE axum::rejection: rejecting request status=400 body="Invalid URL: Cannot parse `favicon.ico` to a `i64`" rejection_type="axum::extract::path::FailedToDeserializePathParams"
+2025-07-09T11:16:49.069757Z TRACE axum::rejection: rejecting request status=400 body="Invalid URL: Cannot parse `favicon.ico` to a `i64`" rejection_type="axum::extract::path::FailedToDeserializePathParams"
