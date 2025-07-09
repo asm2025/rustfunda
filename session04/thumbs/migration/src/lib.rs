@@ -6,6 +6,8 @@ mod m20220101_000001_initial;
 pub enum Images {
     Table,
     Id,
+    Title,
+    Description,
     Filename,
     FileSize,
     MimeType,

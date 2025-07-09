@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i64,
+    pub title: String,
+    pub description: String,
     pub filename: String,
     pub file_size: i64,
     pub mime_type: String,

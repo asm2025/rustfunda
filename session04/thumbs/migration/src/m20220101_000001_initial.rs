@@ -24,9 +24,15 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Images::Filename).string().not_null())
+                    .col(ColumnDef::new(Images::Title).string_len(256).not_null())
+                    .col(
+                        ColumnDef::new(Images::Description)
+                            .string_len(2048)
+                            .not_null(),
+                    )
+                    .col(ColumnDef::new(Images::Filename).string_len(256).not_null())
                     .col(ColumnDef::new(Images::FileSize).big_integer().not_null())
-                    .col(ColumnDef::new(Images::MimeType).string().not_null())
+                    .col(ColumnDef::new(Images::MimeType).string_len(256).not_null())
                     .col(ColumnDef::new(Images::Width).integer())
                     .col(ColumnDef::new(Images::Height).integer())
                     .col(ColumnDef::new(Images::AltText).string())

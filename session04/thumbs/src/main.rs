@@ -244,9 +244,9 @@ async fn image_tag_list(
 
 async fn image_tag_add(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
-    axum_path((id, tag)): axum_path<(i64, &'static str)>,
+    axum_path((id, tag)): axum_path<(i64, String)>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match repo.add_tag_str(id, tag).await {
+    match repo.add_tag_str(id, &tag).await {
         Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

@@ -18,8 +18,8 @@ pub trait IImageRepository {
     async fn list_tags(&self, id: i64) -> Result<Vec<TagModel>>;
     async fn add_tag(&self, image_id: i64, tag_id: i64) -> Result<ImageTagModel>;
     async fn remove_tag(&self, image_id: i64, tag_id: i64) -> Result<DeleteResult>;
-    async fn add_tag_str(&self, image_id: i64, tag: &'static str) -> Result<ImageTagModel>;
-    async fn remove_tag_str(&self, image_id: i64, tag: &'static str) -> Result<DeleteResult>;
+    async fn add_tag_str(&self, image_id: i64, tag: &str) -> Result<ImageTagModel>;
+    async fn remove_tag_str(&self, image_id: i64, tag: &str) -> Result<DeleteResult>;
 }
 
 pub struct ImageRepository {
@@ -64,6 +64,14 @@ impl IImageRepository for ImageRepository {
         let mut active_model: ImageModelDto = existing.into();
 
         // Update fields if they are set in the provided image model
+        if !image.title.is_empty() {
+            active_model.title = Set(image.title);
+        }
+
+        if !image.description.is_empty() {
+            active_model.description = Set(image.description);
+        }
+
         if !image.filename.is_empty() {
             active_model.filename = Set(image.filename);
         }
@@ -139,7 +147,7 @@ impl IImageRepository for ImageRepository {
             .map_err(Into::into)
     }
 
-    async fn add_tag_str(&self, image_id: i64, tag: &'static str) -> Result<ImageTagModel> {
+    async fn add_tag_str(&self, image_id: i64, tag: &str) -> Result<ImageTagModel> {
         // First, find or create the tag
         let tag_model = Tag::find()
             .filter(TagColumn::Name.eq(tag))
@@ -161,7 +169,7 @@ impl IImageRepository for ImageRepository {
         self.add_tag(image_id, tag_id).await
     }
 
-    async fn remove_tag_str(&self, image_id: i64, tag: &'static str) -> Result<DeleteResult> {
+    async fn remove_tag_str(&self, image_id: i64, tag: &str) -> Result<DeleteResult> {
         // First, find the tag ID
         let tag_model = Tag::find()
             .filter(TagColumn::Name.eq(tag))
