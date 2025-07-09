@@ -18,8 +18,8 @@ use tracing_subscriber::{
 
 use migration::{Migrator, MigratorTrait};
 
-mod data;
-use data::{
+mod db;
+use db::{
     entities::{ImageModel, TagModel},
     repositories::{IImageRepository, ITagRepository, ImageRepository, TagRepository},
 };

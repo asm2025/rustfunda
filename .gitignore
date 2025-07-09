@@ -1,5 +1,4 @@
 /target
-/session03/fileio/warandpeace.txt
+_logs
+data
 *.db
-
-/session04/thumbs/_logs

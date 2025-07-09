@@ -2,7 +2,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use sea_orm::{prelude::*, *};
 
-use crate::data::entities::{
+use crate::db::entities::{
     Image, ImageModel, ImageTag, ImageTagColumn, ImageTagModel, ImageTagModelDto, Tag, TagColumn,
     TagModel, TagModelDto,
 };
