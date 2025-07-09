@@ -4,7 +4,7 @@ use sea_orm::{prelude::*, *};
 
 use crate::db::entities::{
     Image, ImageModel, ImageModelDto, ImageTag, ImageTagColumn, ImageTagModel, ImageTagModelDto,
-    Tag, TagModel,
+    Tag, TagColumn, TagModel, TagModelDto,
 };
 
 #[async_trait]
@@ -18,6 +18,8 @@ pub trait IImageRepository {
     async fn list_tags(&self, id: i64) -> Result<Vec<TagModel>>;
     async fn add_tag(&self, image_id: i64, tag_id: i64) -> Result<ImageTagModel>;
     async fn remove_tag(&self, image_id: i64, tag_id: i64) -> Result<DeleteResult>;
+    async fn add_tag_str(&self, image_id: i64, tag: &'static str) -> Result<ImageTagModel>;
+    async fn remove_tag_str(&self, image_id: i64, tag: &'static str) -> Result<DeleteResult>;
 }
 
 pub struct ImageRepository {
@@ -135,5 +137,43 @@ impl IImageRepository for ImageRepository {
             .exec(&self.db)
             .await
             .map_err(Into::into)
+    }
+
+    async fn add_tag_str(&self, image_id: i64, tag: &'static str) -> Result<ImageTagModel> {
+        // First, find or create the tag
+        let tag_model = Tag::find()
+            .filter(TagColumn::Name.eq(tag))
+            .one(&self.db)
+            .await?;
+
+        let tag_id = match tag_model {
+            Some(t) => t.id,
+            None => {
+                let new_tag = TagModelDto {
+                    id: NotSet,
+                    name: Set(tag.to_string()),
+                };
+                new_tag.insert(&self.db).await?.id
+            }
+        };
+
+        // Then, create the image-tag association
+        self.add_tag(image_id, tag_id).await
+    }
+
+    async fn remove_tag_str(&self, image_id: i64, tag: &'static str) -> Result<DeleteResult> {
+        // First, find the tag ID
+        let tag_model = Tag::find()
+            .filter(TagColumn::Name.eq(tag))
+            .one(&self.db)
+            .await?;
+
+        if let Some(t) = tag_model {
+            // If the tag exists, unassign it from the image
+            self.remove_tag(image_id, t.id).await
+        } else {
+            // If the tag does not exist, return an error
+            Err(anyhow::anyhow!("Tag '{}' not found", tag))
+        }
     }
 }
