@@ -25,11 +25,7 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Images::Title).string_len(256).not_null())
-                    .col(
-                        ColumnDef::new(Images::Description)
-                            .string_len(2048)
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(Images::Description).string_len(2048))
                     .col(ColumnDef::new(Images::Filename).string_len(256).not_null())
                     .col(ColumnDef::new(Images::FileSize).big_integer().not_null())
                     .col(ColumnDef::new(Images::MimeType).string_len(256).not_null())
@@ -139,8 +135,8 @@ impl MigrationTrait for Migration {
             "nature",
             "urban",
             "black-and-white",
+            "greyscale",
             "color",
-            "macro",
             "street",
             "architecture",
             "people",

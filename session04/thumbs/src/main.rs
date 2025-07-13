@@ -2,7 +2,7 @@ use anyhow::Result;
 use axum::{
     Extension, Json, Router,
     extract::Path as axum_path,
-    http::StatusCode,
+    http::{HeaderValue, StatusCode},
     response::IntoResponse,
     routing::{delete, get, post, put},
 };
@@ -10,7 +10,10 @@ use dotenvy::dotenv;
 use sea_orm::{prelude::*, *};
 use sea_orm_migration::prelude::*;
 use std::{fs, path::Path, sync::Arc, time::Duration};
-use tower_http::services::ServeDir;
+use tower_http::{
+    cors::{Any, CorsLayer},
+    services::ServeDir,
+};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{
     EnvFilter, filter::LevelFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt,
@@ -20,7 +23,7 @@ use migration::{Migrator, MigratorTrait};
 
 mod db;
 use db::{
-    entities::{ImageModel, TagModel},
+    entities::{CreateImageDto, CreateTagDto, ImageModel, TagModel, UpdateImageDto, UpdateTagDto},
     repositories::{IImageRepository, ITagRepository, ImageRepository, TagRepository},
 };
 
@@ -148,12 +151,21 @@ async fn setup_database(db_url: &str) -> Result<DatabaseConnection> {
 
 fn setup_router() -> Router {
     let static_path = std::env::current_dir().unwrap().join("wwwroot");
+    let origins = std::env::var("CORS_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost".to_string())
+        .split(',')
+        .map(|s| s.trim().parse::<HeaderValue>().unwrap())
+        .collect::<Vec<_>>();
+    let cors = CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods(Any)
+        .allow_headers(Any);
     tracing::info!("Configuring router");
     Router::new()
         .route("/", get(image_list))
         .route("/count", get(image_count))
-        .route("/", post(image_add))
         .route("/{id}", get(image_get))
+        .route("/", post(image_add))
         .route("/{id}", put(image_update))
         .route("/{id}", delete(image_delete))
         .route("/{id}/tags/", get(image_tag_list))
@@ -161,14 +173,15 @@ fn setup_router() -> Router {
         .route("/{id}/tags/{tag_id}", delete(image_tag_remove))
         .route("/tags/", get(tag_list))
         .route("/tags/count", get(tag_count))
-        .route("/tags/", post(tag_add))
         .route("/tags/{id}", get(tag_get))
+        .route("/tags/", post(tag_add))
         .route("/tags/{id}", put(tag_update))
         .route("/tags/{id}", delete(tag_delete))
         .route("/tags/{id}/images/", get(tag_image_list))
         .route("/tags/{id}/images/", post(tag_image_add))
         .route("/tags/{id}/images/{tag_id}", delete(tag_image_remove))
         .fallback_service(ServeDir::new(static_path).append_index_html_on_directories(true))
+        .layer(cors)
 }
 
 // Handlers
@@ -190,16 +203,6 @@ async fn image_count(
     }
 }
 
-async fn image_add(
-    Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
-    Json(image): Json<ImageModel>,
-) -> Result<Json<ImageModel>, (StatusCode, String)> {
-    match repo.create(image).await {
-        Ok(created) => Ok(Json(created)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
 async fn image_get(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
@@ -211,10 +214,20 @@ async fn image_get(
     }
 }
 
+async fn image_add(
+    Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
+    Json(image): Json<CreateImageDto>,
+) -> Result<Json<ImageModel>, (StatusCode, String)> {
+    match repo.create(image).await {
+        Ok(created) => Ok(Json(created)),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
 async fn image_update(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
-    Json(image): Json<ImageModel>,
+    Json(image): Json<UpdateImageDto>,
 ) -> Result<Json<ImageModel>, (StatusCode, String)> {
     match repo.update(id, image).await {
         Ok(updated) => Ok(Json(updated)),
@@ -280,16 +293,6 @@ async fn tag_count(
     }
 }
 
-async fn tag_add(
-    Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
-    Json(tag): Json<TagModel>,
-) -> Result<Json<TagModel>, (StatusCode, String)> {
-    match repo.create(tag).await {
-        Ok(created) => Ok(Json(created)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
-}
-
 async fn tag_get(
     Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
@@ -301,10 +304,20 @@ async fn tag_get(
     }
 }
 
+async fn tag_add(
+    Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
+    Json(tag): Json<CreateTagDto>,
+) -> Result<Json<TagModel>, (StatusCode, String)> {
+    match repo.create(tag).await {
+        Ok(created) => Ok(Json(created)),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
 async fn tag_update(
     Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
-    Json(tag): Json<TagModel>,
+    Json(tag): Json<UpdateTagDto>,
 ) -> Result<Json<TagModel>, (StatusCode, String)> {
     match repo.update(id, tag).await {
         Ok(updated) => Ok(Json(updated)),

@@ -17,18 +17,18 @@ pub enum Relation {
         from = "Column::ImageId",
         to = "super::image::Column::Id"
     )]
-    Image,
+    ImageEntity,
     #[sea_orm(
         belongs_to = "super::tag::Entity",
         from = "Column::TagId",
         to = "super::tag::Column::Id"
     )]
-    Tag,
+    TagEntity,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
 
 pub use ActiveModel as ImageTagModelDto;
 pub use Column as ImageTagColumn;
-pub use Entity as ImageTag;
+pub use Entity as ImageTagEntity;
 pub use Model as ImageTagModel;
