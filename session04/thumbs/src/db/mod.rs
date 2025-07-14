@@ -126,3 +126,7 @@ impl<E: EntityTrait, R: EntityTrait> FilterRelatedCondition<E, R> for DirectCond
         query.filter(self.0.clone())
     }
 }
+
+pub trait Merge<T> {
+    fn merge(&self, model: &mut T);
+}

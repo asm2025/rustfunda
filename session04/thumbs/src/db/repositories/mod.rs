@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, DeleteResult, EntityTrait};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait};
 
 mod image_repository;
 mod tag_repository;
@@ -8,7 +8,7 @@ mod tag_repository;
 pub use image_repository::*;
 pub use tag_repository::*;
 
-use crate::db::{FilterCondition, FilterRelatedCondition, Pagination, ResultSet};
+use crate::db::{FilterCondition, FilterRelatedCondition, Merge, Pagination, ResultSet};
 
 #[async_trait]
 pub trait IHasDatabase {
@@ -17,11 +17,11 @@ pub trait IHasDatabase {
 
 #[async_trait]
 pub trait IRepository: IHasDatabase {
-    type Entity: EntityTrait;
-    type Model: Send + Sync;
-    type Key: Send + Sync;
-    type CreateDto: Send + Sync;
-    type UpdateDto: Send + Sync;
+    type Entity: EntityTrait + Send + Sync;
+    type PrimaryKey: Send + Sync;
+    type Model: ModelTrait + Send + Sync;
+    type ActiveModel: ActiveModelTrait + Send + Sync;
+    type UpdateModel: Merge<Self::ActiveModel> + Send + Sync;
 
     async fn list<F>(
         &self,
@@ -33,10 +33,10 @@ pub trait IRepository: IHasDatabase {
     async fn count<F>(&self, filter: Option<F>) -> Result<u64>
     where
         F: FilterCondition<Self::Entity> + Send + Sync;
-    async fn get(&self, id: Self::Key) -> Result<Option<Self::Model>>;
-    async fn create(&self, model: Self::CreateDto) -> Result<Self::Model>;
-    async fn update(&self, id: Self::Key, model: Self::UpdateDto) -> Result<Self::Model>;
-    async fn delete(&self, id: Self::Key) -> Result<DeleteResult>;
+    async fn get(&self, id: Self::PrimaryKey) -> Result<Option<Self::Model>>;
+    async fn create(&self, model: Self::Model) -> Result<Self::Model>;
+    async fn update(&self, id: Self::PrimaryKey, model: Self::UpdateModel) -> Result<Self::Model>;
+    async fn delete(&self, id: Self::PrimaryKey) -> Result<DeleteResult>;
 }
 
 #[async_trait]
