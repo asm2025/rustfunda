@@ -76,7 +76,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                     {/* Image Display */}
                     <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-6 flex items-center justify-center">
                         <div className="text-gray-400 text-center">
-                            <ImageWithFallback src={imageApi.image_uri(image.filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
+                            <ImageWithFallback src={imageApi.getThumbUri(image.filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
                             <p className="font-medium">{image.filename}</p>
                         </div>
                     </div>

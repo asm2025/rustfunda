@@ -11,7 +11,13 @@ const api = axios.create({
 });
 
 export const imageApi = {
-    image_uri: (name: string) => `${API_BASE_URL}/images/${name}`,
+    getImageUri: (name: string) => `${API_BASE_URL}/images/${name}`,
+    getThumbUri: (name: string) => {
+        const lastDotIndex = name.lastIndexOf(".");
+        const baseName = lastDotIndex !== -1 ? name.substring(0, lastDotIndex) : name;
+        const extension = lastDotIndex !== -1 ? name.substring(lastDotIndex) : "";
+        return `${API_BASE_URL}/images/${baseName}_thumb${extension}`;
+    },
     // Image endpoints
     getImages: () => api.get<ResultSet<ModelWithRelated<ImageModel, TagModel>>>("/"),
     getImageCount: () => api.get<number>("/count"),
