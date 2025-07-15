@@ -1,5 +1,7 @@
-use sea_orm::{NotSet, Set, entity::prelude::*};
+use sea_orm::{EntityTrait, NotSet, Set, prelude::*};
 use serde::{Deserialize, Serialize};
+
+use crate::db::Merge;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "tags")]
@@ -8,25 +10,6 @@ pub struct Model {
     pub id: i64,
     #[sea_orm(unique)]
     pub name: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateTagDto {
-    pub name: String,
-}
-
-impl From<CreateTagDto> for ActiveModel {
-    fn from(req: CreateTagDto) -> Self {
-        Self {
-            id: NotSet,
-            name: Set(req.name),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpdateTagDto {
-    pub name: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -51,6 +34,42 @@ impl Related<Entity> for super::image_tag::Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTagDto {
+    pub name: String,
+}
+
+impl From<CreateTagDto> for Model {
+    fn from(req: CreateTagDto) -> Self {
+        Self {
+            id: 0,
+            name: req.name,
+        }
+    }
+}
+
+impl From<CreateTagDto> for ActiveModel {
+    fn from(req: CreateTagDto) -> Self {
+        Self {
+            id: NotSet,
+            name: Set(req.name),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTagDto {
+    pub name: Option<String>,
+}
+
+impl Merge<ActiveModel> for UpdateTagDto {
+    fn merge(&self, model: &mut ActiveModel) {
+        if let Some(name) = self.name.as_ref() {
+            model.name = Set(name.clone());
+        }
+    }
+}
 
 pub use ActiveModel as TagModelDto;
 pub use Column as TagColumn;

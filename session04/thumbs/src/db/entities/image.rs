@@ -3,6 +3,8 @@ use chrono::{DateTime, Utc};
 use sea_orm::{EntityTrait, NotSet, Set, prelude::*};
 use serde::{Deserialize, Serialize};
 
+use crate::db::Merge;
+
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "images")]
 pub struct Model {
@@ -166,5 +168,3 @@ pub use ActiveModel as ImageModelDto;
 pub use Column as ImageColumn;
 pub use Entity as ImageEntity;
 pub use Model as ImageModel;
-
-use crate::db::Merge;

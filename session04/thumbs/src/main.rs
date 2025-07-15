@@ -22,10 +22,7 @@ use tracing_subscriber::{
 use migration::{Migrator, MigratorTrait};
 
 mod db;
-use db::{
-    entities::{CreateImageDto, CreateTagDto, ImageModel, TagModel, UpdateImageDto, UpdateTagDto},
-    repositories::{IImageRepository, ITagRepository, ImageRepository, TagRepository},
-};
+use db::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -51,6 +48,10 @@ async fn run() -> Result<()> {
     tracing::info!("Configuring database");
     let db_url = std::env::var("DATABASE_URL")?;
     let db = setup_database(&db_url).await?;
+    /*
+     * Must specify the associated tyupes.
+     * IImageRepository<Entity = Type, PrimaryKey = Type, Model = Type, ActiveModel = Type, UpdateModel = Type, Related = Type, RelatedPrimaryKey = Type>
+     */
     let images_repo: Arc<dyn IImageRepository + Send + Sync> =
         Arc::new(ImageRepository::new(db.clone()));
     let tags_repo: Arc<dyn ITagRepository + Send + Sync> = Arc::new(TagRepository::new(db.clone()));
@@ -187,8 +188,8 @@ fn setup_router() -> Router {
 // Handlers
 async fn image_list(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
-) -> Result<Json<Vec<ImageModel>>, (StatusCode, String)> {
-    match repo.list().await {
+) -> Result<Json<ResultSet<ImageModel>>, (StatusCode, String)> {
+    match repo.list(None, None).await {
         Ok(images) => Ok(Json(images)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -197,7 +198,7 @@ async fn image_list(
 async fn image_count(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
 ) -> Result<Json<u64>, (StatusCode, String)> {
-    match repo.count().await {
+    match repo.count(None).await {
         Ok(count) => Ok(Json(count)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -218,7 +219,7 @@ async fn image_add(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
     Json(image): Json<CreateImageDto>,
 ) -> Result<Json<ImageModel>, (StatusCode, String)> {
-    match repo.create(image).await {
+    match repo.create_with_tags(image).await {
         Ok(created) => Ok(Json(created)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -248,8 +249,8 @@ async fn image_delete(
 async fn image_tag_list(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
-) -> Result<Json<Vec<TagModel>>, (StatusCode, String)> {
-    match repo.list_tags(id).await {
+) -> Result<Json<ResultSet<TagModel>>, (StatusCode, String)> {
+    match repo.list_tags(id, None, None).await {
         Ok(tags) => Ok(Json(tags)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -259,7 +260,7 @@ async fn image_tag_add(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
     axum_path((id, tag)): axum_path<(i64, String)>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match repo.add_tag_str(id, &tag).await {
+    match repo.add_tags_from_str(id, &tag).await {
         Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -277,8 +278,8 @@ async fn image_tag_remove(
 
 async fn tag_list(
     Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
-) -> Result<Json<Vec<TagModel>>, (StatusCode, String)> {
-    match repo.list().await {
+) -> Result<Json<ResultSet<TagModel>>, (StatusCode, String)> {
+    match repo.list(None, None).await {
         Ok(tags) => Ok(Json(tags)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -287,7 +288,7 @@ async fn tag_list(
 async fn tag_count(
     Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
 ) -> Result<Json<u64>, (StatusCode, String)> {
-    match repo.count().await {
+    match repo.count(None).await {
         Ok(count) => Ok(Json(count)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -306,7 +307,7 @@ async fn tag_get(
 
 async fn tag_add(
     Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
-    Json(tag): Json<CreateTagDto>,
+    Json(tag): Json<TagModel>,
 ) -> Result<Json<TagModel>, (StatusCode, String)> {
     match repo.create(tag).await {
         Ok(created) => Ok(Json(created)),
@@ -338,8 +339,8 @@ async fn tag_delete(
 async fn tag_image_list(
     Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
-) -> Result<Json<Vec<ImageModel>>, (StatusCode, String)> {
-    match repo.list_images(id).await {
+) -> Result<Json<ResultSet<ImageModel>>, (StatusCode, String)> {
+    match repo.list_images(id, None, None).await {
         Ok(images) => Ok(Json(images)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

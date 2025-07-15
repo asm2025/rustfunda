@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait};
+use sea_orm::{DatabaseConnection, DeleteResult, EntityTrait, PrimaryKeyTrait};
 
 mod image_repository;
 mod tag_repository;
@@ -16,40 +16,45 @@ pub trait IHasDatabase {
 }
 
 #[async_trait]
-pub trait IRepository: IHasDatabase {
-    type Entity: EntityTrait + Send + Sync;
-    type PrimaryKey: Send + Sync;
-    type Model: ModelTrait + Send + Sync;
-    type ActiveModel: ActiveModelTrait + Send + Sync;
-    type UpdateModel: Merge<Self::ActiveModel> + Send + Sync;
-
-    async fn list<F>(
+pub trait IRepository<E, U>: IHasDatabase
+where
+    E: EntityTrait + Send + Sync,
+    U: Merge<<E as EntityTrait>::ActiveModel> + Send + Sync,
+{
+    async fn list(
         &self,
-        filter: Option<F>,
+        filter: Option<Box<dyn FilterCondition<E> + Send + Sync>>,
         pagination: Option<Pagination>,
-    ) -> Result<ResultSet<Self::Model>>
-    where
-        F: FilterCondition<Self::Entity> + Send + Sync;
-    async fn count<F>(&self, filter: Option<F>) -> Result<u64>
-    where
-        F: FilterCondition<Self::Entity> + Send + Sync;
-    async fn get(&self, id: Self::PrimaryKey) -> Result<Option<Self::Model>>;
-    async fn create(&self, model: Self::Model) -> Result<Self::Model>;
-    async fn update(&self, id: Self::PrimaryKey, model: Self::UpdateModel) -> Result<Self::Model>;
-    async fn delete(&self, id: Self::PrimaryKey) -> Result<DeleteResult>;
+    ) -> Result<ResultSet<<E as EntityTrait>::Model>>;
+    async fn count(&self, filter: Option<Box<dyn FilterCondition<E> + Send + Sync>>)
+    -> Result<u64>;
+    async fn get(
+        &self,
+        id: <<E as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+    ) -> Result<Option<<E as EntityTrait>::Model>>;
+    async fn create(&self, model: <E as EntityTrait>::Model) -> Result<<E as EntityTrait>::Model>;
+    async fn update(
+        &self,
+        id: <<E as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+        model: U,
+    ) -> Result<<E as EntityTrait>::Model>;
+    async fn delete(
+        &self,
+        id: <<E as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+    ) -> Result<DeleteResult>;
 }
 
 #[async_trait]
-pub trait IRepositoryWithRelated: IRepository {
-    type Related: EntityTrait;
-
-    async fn list_with_related<F, R>(
+pub trait IRepositoryWithRelated<E, U, R>: IRepository<E, U>
+where
+    E: EntityTrait + Send + Sync,
+    U: Merge<<E as EntityTrait>::ActiveModel> + Send + Sync,
+    R: EntityTrait + Send + Sync,
+{
+    async fn list_with_related(
         &self,
-        filter: Option<F>,
-        filter_related: Option<R>,
+        filter: Option<Box<dyn FilterCondition<E> + Send + Sync>>,
+        filter_related: Option<Box<dyn FilterRelatedCondition<E, R> + Send + Sync>>,
         pagination: Option<Pagination>,
-    ) -> Result<ResultSet<(Self::Model, Vec<<Self::Related as EntityTrait>::Model>)>>
-    where
-        F: FilterCondition<Self::Entity> + Send + Sync,
-        R: FilterRelatedCondition<Self::Entity, Self::Related> + Send + Sync;
+    ) -> Result<ResultSet<(<E as EntityTrait>::Model, Vec<<R as EntityTrait>::Model>)>>;
 }
