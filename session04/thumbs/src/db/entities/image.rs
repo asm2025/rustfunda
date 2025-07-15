@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use sea_orm::{EntityTrait, NotSet, Set, prelude::*};
 use serde::{Deserialize, Serialize};
 
-use crate::db::Merge;
+use super::Merge;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "images")]
@@ -58,8 +58,13 @@ impl ActiveModelBehavior for ActiveModel {
     where
         C: ConnectionTrait,
     {
-        if !insert {
-            self.updated_at = Set(Utc::now());
+        let now = Utc::now();
+
+        if insert {
+            self.created_at = Set(now);
+            self.updated_at = Set(now);
+        } else {
+            self.updated_at = Set(now);
         }
         Ok(self)
     }

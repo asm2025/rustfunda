@@ -19,6 +19,18 @@ export interface TagModel {
     updated_at?: string;
 }
 
-export interface ImageWithTags extends ImageModel {
-    tags?: TagModel[];
+export interface ModelWithRelated<M, R> {
+    item: M;
+    related: R[];
+}
+
+export interface Pagination {
+    page: number;
+    page_size: number;
+}
+
+export interface ResultSet<T> {
+    data: T[];
+    total: number;
+    pagination?: Pagination;
 }

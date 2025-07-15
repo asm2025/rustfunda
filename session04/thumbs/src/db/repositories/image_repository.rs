@@ -133,7 +133,7 @@ impl IRepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRep
             Box<dyn FilterRelatedCondition<ImageEntity, TagEntity> + Send + Sync>,
         >,
         pagination: Option<Pagination>,
-    ) -> Result<ResultSet<(ImageModel, Vec<TagModel>)>> {
+    ) -> Result<ResultSet<ModelWithRelated<ImageModel, TagModel>>> {
         let mut query = <ImageEntity as EntityTrait>::find();
 
         if let Some(f) = &filter {
@@ -152,7 +152,15 @@ impl IRepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRep
             query = query.offset((p.page - 1) * p.page_size).limit(p.page_size);
         }
 
-        let data = query.all(self.database()).await?;
+        let data = query
+            .all(self.database())
+            .await?
+            .into_iter()
+            .map(|e| ModelWithRelated {
+                item: e.0,
+                related: e.1,
+            })
+            .collect();
 
         Ok(ResultSet {
             data,

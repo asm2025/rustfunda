@@ -1,7 +1,8 @@
+use ::image::ImageReader;
 use anyhow::Result;
 use axum::{
     Extension, Json, Router,
-    extract::Path as axum_path,
+    extract::{Multipart, Path as axum_path},
     http::{HeaderValue, StatusCode},
     response::IntoResponse,
     routing::{delete, get, post, put},
@@ -18,6 +19,7 @@ use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{
     EnvFilter, filter::LevelFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt,
 };
+use uuid::Uuid;
 
 use migration::{Migrator, MigratorTrait};
 
@@ -151,7 +153,9 @@ async fn setup_database(db_url: &str) -> Result<DatabaseConnection> {
 }
 
 fn setup_router() -> Router {
-    let static_path = std::env::current_dir().unwrap().join("wwwroot");
+    let curdir = std::env::current_dir().unwrap();
+    let static_path = curdir.join("wwwroot");
+    let images_path = curdir.join("data/images");
     let origins = std::env::var("CORS_ORIGINS")
         .unwrap_or_else(|_| "http://localhost".to_string())
         .split(',')
@@ -161,6 +165,7 @@ fn setup_router() -> Router {
         .allow_origin(origins)
         .allow_methods(Any)
         .allow_headers(Any);
+
     tracing::info!("Configuring router");
     Router::new()
         .route("/", get(image_list))
@@ -181,6 +186,7 @@ fn setup_router() -> Router {
         .route("/tags/{id}/images/", get(tag_image_list))
         .route("/tags/{id}/images/", post(tag_image_add))
         .route("/tags/{id}/images/{tag_id}", delete(tag_image_remove))
+        .nest_service("/images", ServeDir::new(images_path))
         .fallback_service(ServeDir::new(static_path).append_index_html_on_directories(true))
         .layer(cors)
 }
@@ -188,8 +194,8 @@ fn setup_router() -> Router {
 // Handlers
 async fn image_list(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
-) -> Result<Json<ResultSet<ImageModel>>, (StatusCode, String)> {
-    match repo.list(None, None).await {
+) -> Result<Json<ResultSet<ModelWithRelated<ImageModel, TagModel>>>, (StatusCode, String)> {
+    match repo.list_with_related(None, None, None).await {
         Ok(images) => Ok(Json(images)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -217,9 +223,107 @@ async fn image_get(
 
 async fn image_add(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
-    Json(image): Json<CreateImageDto>,
+    mut multipart: Multipart,
 ) -> Result<Json<ImageModel>, (StatusCode, String)> {
-    match repo.create_with_tags(image).await {
+    let mut fields = std::collections::HashMap::new();
+    let mut image_bytes = None;
+
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?
+    {
+        let name = field.name().unwrap_or("").to_string();
+
+        if name == "image_file" {
+            // This is the file field
+            image_bytes = Some(
+                field
+                    .bytes()
+                    .await
+                    .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?,
+            );
+        } else {
+            // This is a regular form field
+            let value = field
+                .text()
+                .await
+                .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+            fields.insert(name, value);
+        }
+    }
+
+    // Unwrap the image_bytes and check if it has data
+    let image_data = image_bytes.ok_or((
+        StatusCode::BAD_REQUEST,
+        "No image file provided".to_string(),
+    ))?;
+
+    if image_data.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Image file is empty".to_string()));
+    }
+
+    // Save the image file
+    let filename = fields
+        .get("filename")
+        .cloned()
+        .unwrap_or_else(|| format!("{}.jpg", Uuid::new_v4()));
+    let images_env_dir = std::env::var("IMAGES_DIR").unwrap_or("data/images".to_string());
+    let images_dir = Path::new(&images_env_dir);
+    fs::create_dir_all(images_dir)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let file_path = images_dir.join(&filename);
+    fs::write(&file_path, &image_data).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to save image: {}", e),
+        )
+    })?;
+
+    // Load image to get dimensions and create thumbnail
+    let img = ImageReader::new(std::io::Cursor::new(&image_data))
+        .with_guessed_format()
+        .map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Invalid image format: {}", e),
+            )
+        })?
+        .decode()
+        .map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Failed to decode image: {}", e),
+            )
+        })?;
+    let (width, height) = (img.width(), img.height());
+
+    // Create thumbnail keeping aspect ratio (max 256px on longest side)
+    let thumbnail = img.thumbnail(256, 256);
+    let base_name = file_path.file_stem().unwrap_or_default().to_string_lossy();
+    let extension = file_path.extension().unwrap_or_default().to_string_lossy();
+    let thumb_path = images_dir.join(&format!("{}_thumb.{}", base_name, extension));
+    thumbnail.save(&thumb_path).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to save thumbnail: {}", e),
+        )
+    })?;
+
+    // Assign the missing information to the following image model and let the repository create the data record
+    let image_model = CreateImageDto {
+        title: fields.get("title").cloned().unwrap_or_default(),
+        description: Some(fields.get("description").cloned().unwrap_or_default()),
+        filename: filename,
+        file_size: image_data.len() as i64,
+        mime_type: fields.get("mime_type").cloned().unwrap_or_default(),
+        width: Some(width as i32),
+        height: Some(height as i32),
+        alt_text: Some(fields.get("alt_text").cloned().unwrap_or_default()),
+        tags: Some(fields.get("tags").cloned().unwrap_or_default()),
+    };
+
+    match repo.create_with_tags(image_model).await {
         Ok(created) => Ok(Json(created)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
@@ -364,4 +468,12 @@ async fn tag_image_remove(
         Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
+}
+
+fn parse_i64(s: Option<&String>) -> Option<i64> {
+    s.and_then(|v| v.parse::<i64>().ok())
+}
+
+fn parse_i32(s: Option<&String>) -> Option<i32> {
+    s.and_then(|v| v.parse::<i32>().ok())
 }

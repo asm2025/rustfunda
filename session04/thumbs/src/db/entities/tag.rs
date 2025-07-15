@@ -1,7 +1,7 @@
 use sea_orm::{EntityTrait, NotSet, Set, prelude::*};
 use serde::{Deserialize, Serialize};
 
-use crate::db::Merge;
+use super::Merge;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "tags")]

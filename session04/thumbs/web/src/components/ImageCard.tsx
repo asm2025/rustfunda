@@ -1,6 +1,8 @@
 import React from "react";
 import { ImageModel } from "../types";
 import humanize from "humanize-plus";
+import ImageWithFallback from "./ImageWithFallback";
+import { imageApi } from "../services/api";
 
 interface ImageCardProps {
     image: ImageModel;
@@ -13,9 +15,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick, isSelected }) => 
         <div className={`card card-hover max-w-xs cursor-pointer animate-scale-in ${isSelected ? "ring-4 ring-blue-500 scale-105" : ""}`} onClick={onClick}>
             <div className="aspect-square bg-gray-200 m-1 flex items-center justify-center">
                 <div className="text-gray-400 text-center w-full mx-auto p-4">
-                    <svg className="w-16 h-16 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                    </svg>
+                    <ImageWithFallback src={imageApi.image_uri(image.filename)} alt={image.alt_text} className="w-full h-auto rounded" phClassName="w-16 h-16 mx-auto mb-2" />
                     <p className="text-sm truncate">{image.filename}</p>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ImageModel, TagModel } from "../types";
+import { ResultSet, ImageModel, TagModel, ModelWithRelated } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
@@ -11,23 +11,29 @@ const api = axios.create({
 });
 
 export const imageApi = {
+    image_uri: (name: string) => `${API_BASE_URL}/images/${name}`,
     // Image endpoints
-    getImages: () => api.get<ImageModel[]>("/"),
+    getImages: () => api.get<ResultSet<ModelWithRelated<ImageModel, TagModel>>>("/"),
     getImageCount: () => api.get<number>("/count"),
-    createImage: (image: Omit<ImageModel, "id">) => api.post<ImageModel>("/", image),
+    createImage: (formData: FormData) =>
+        api.post("/", formData, {
+            headers: {
+                "Content-Type": undefined,
+            },
+        }),
     getImage: (id: number) => api.get<ImageModel>(`/${id}`),
     updateImage: (id: number, image: Partial<ImageModel>) => api.put<ImageModel>(`/${id}`, image),
     deleteImage: (id: number) => api.delete(`/${id}`),
 
     // Image tags endpoints
-    getImageTags: (id: number) => api.get<TagModel[]>(`/${id}/tags/`),
+    getImageTags: (id: number) => api.get<ResultSet<TagModel>>(`/${id}/tags/`),
     addImageTag: (id: number, tag: string) => api.post(`/${id}/tags/`, { tag }),
     removeImageTag: (id: number, tagId: number) => api.delete(`/${id}/tags/${tagId}`),
 };
 
 export const tagApi = {
     // Tag endpoints
-    getTags: () => api.get<TagModel[]>("/tags/"),
+    getTags: () => api.get<ResultSet<TagModel>>("/tags/"),
     getTagCount: () => api.get<number>("/tags/count"),
     createTag: (tag: Omit<TagModel, "id">) => api.post<TagModel>("/tags/", tag),
     getTag: (id: number) => api.get<TagModel>(`/tags/${id}`),
@@ -35,7 +41,7 @@ export const tagApi = {
     deleteTag: (id: number) => api.delete(`/tags/${id}`),
 
     // Tag images endpoints
-    getTagImages: (id: number) => api.get<ImageModel[]>(`/tags/${id}/images/`),
+    getTagImages: (id: number) => api.get<ResultSet<ImageModel>>(`/tags/${id}/images/`),
     addTagImage: (id: number, imageId: number) => api.post(`/tags/${id}/images/`, { imageId }),
     removeTagImage: (id: number, imageId: number) => api.delete(`/tags/${id}/images/${imageId}`),
 };

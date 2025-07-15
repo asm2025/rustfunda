@@ -7,3 +7,7 @@ pub use image::{
 };
 pub use image_tag::{ImageTagColumn, ImageTagEntity, ImageTagModel, ImageTagModelDto};
 pub use tag::{CreateTagDto, TagColumn, TagEntity, TagModel, TagModelDto, UpdateTagDto};
+
+pub trait Merge<T> {
+    fn merge(&self, model: &mut T);
+}

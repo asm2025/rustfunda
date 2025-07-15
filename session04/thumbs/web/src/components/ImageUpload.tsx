@@ -13,6 +13,7 @@ interface ImageUploadProps {
 
 interface FormData {
     title: string;
+    description: string;
     file: FileList;
     tags: string;
 }
@@ -27,32 +28,38 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
     } = useForm<FormData>();
 
     const onSubmit = async (data: FormData) => {
-        const file = data.file[0];
+        const file = data.file && data.file.length > 0 && data.file[0];
 
-        // Validate file size (2MB max)
-        if (file.size > MAX_FILE_SIZE) {
-            toast.error(`File size must not be larger than ${humanize.fileSize(MAX_FILE_SIZE)}`);
-            return;
-        }
+        if (file) {
+            // Validate file size (2MB max)
+            if (file.size > MAX_FILE_SIZE) {
+                toast.error(`File size must not be larger than ${humanize.fileSize(MAX_FILE_SIZE)}`);
+                return;
+            }
 
-        // Validate file type
-        if (!file.type.startsWith("image/")) {
-            toast.error("Please select an image file");
-            return;
+            // Validate file type
+            if (!file.type.startsWith("image/")) {
+                toast.error("Please select an image file");
+                return;
+            }
         }
 
         startTransition(async () => {
             try {
-                // Create image object
-                const imageData: Omit<ImageModel, "id"> = {
-                    title: data.title,
-                    filename: file.name,
-                    file_size: file.size,
-                    mime_type: file.type,
-                    alt_text: data.title,
-                };
+                const formData = new window.FormData();
+                formData.append("title", data.title);
+                formData.append("description", data.description || "");
+                formData.append("alt_text", data.title);
+                formData.append("tags", data.tags || "");
 
-                const response = await imageApi.createImage(imageData);
+                if (file) {
+                    formData.append("image_file", file);
+                    formData.append("file", file);
+                    formData.append("filename", file.name);
+                    formData.append("mime_type", file.type);
+                }
+
+                const response = await imageApi.createImage(formData);
                 onUpload(response.data);
                 reset();
                 toast.success("Image uploaded successfully!");
@@ -71,6 +78,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                     <input type="text" {...register("title", { required: "Title is required" })} className="input-field" placeholder="Enter image title" />
                     {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea {...register("description")} className="input-field" placeholder="Enter image description" rows={3} />
+                    {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
                 </div>
 
                 <div>

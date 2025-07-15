@@ -128,7 +128,7 @@ impl IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> for TagReposit
             Box<dyn FilterRelatedCondition<TagEntity, ImageEntity> + Send + Sync>,
         >,
         pagination: Option<Pagination>,
-    ) -> Result<ResultSet<(TagModel, Vec<ImageModel>)>> {
+    ) -> Result<ResultSet<ModelWithRelated<TagModel, ImageModel>>> {
         let mut query = <TagEntity as EntityTrait>::find();
 
         if let Some(f) = &filter {
@@ -147,7 +147,15 @@ impl IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> for TagReposit
             query = query.offset((p.page - 1) * p.page_size).limit(p.page_size);
         }
 
-        let data = query.all(self.database()).await?;
+        let data = query
+            .all(self.database())
+            .await?
+            .into_iter()
+            .map(|e| ModelWithRelated {
+                item: e.0,
+                related: e.1,
+            })
+            .collect();
 
         Ok(ResultSet {
             data,

@@ -5,9 +5,11 @@ import humanize from "humanize-plus";
 import { format as formatDate } from "date-fns";
 import { ImageModel, TagModel } from "../types";
 import { imageApi } from "../services/api";
+import ImageWithFallback from "./ImageWithFallback";
 
 interface ImageModalProps {
     image: ImageModel;
+    tags: TagModel[];
     onClose: () => void;
     onUpdate: (image: ImageModel) => void;
     onDelete: (imageId: number) => void;
@@ -15,35 +17,27 @@ interface ImageModalProps {
 
 interface FormData {
     title: string;
-    tags: string;
+    description?: string;
 }
 
-const ImageModal: React.FC<ImageModalProps> = ({ image, onClose, onUpdate, onDelete }) => {
+const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate, onDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [tags, setTags] = useState<TagModel[]>([]);
     const [isPending, startTransition] = useTransition();
 
     const { register, handleSubmit, setValue } = useForm<FormData>();
 
     useEffect(() => {
-        loadImageTags();
         setValue("title", image.title);
+        setValue("description", image.description);
     }, [image, setValue]);
-
-    const loadImageTags = async () => {
-        try {
-            const response = await imageApi.getImageTags(image.id!);
-            setTags(response.data);
-            setValue("tags", response.data.map((tag) => tag.name).join(", "));
-        } catch (error) {
-            console.error("Failed to load tags: ", error);
-        }
-    };
 
     const handleUpdate = async (data: FormData) => {
         startTransition(async () => {
             try {
-                const response = await imageApi.updateImage(image.id!, { title: data.title });
+                const response = await imageApi.updateImage(image.id!, {
+                    title: data.title,
+                    description: data.description,
+                });
                 onUpdate(response.data);
                 setIsEditing(false);
                 toast.success("Image updated successfully!");
@@ -82,9 +76,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, onClose, onUpdate, onDel
                     {/* Image Display */}
                     <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-6 flex items-center justify-center">
                         <div className="text-gray-400 text-center">
-                            <svg className="w-24 h-24 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                            </svg>
+                            <ImageWithFallback src={imageApi.image_uri(image.filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
                             <p className="font-medium">{image.filename}</p>
                         </div>
                     </div>
@@ -97,8 +89,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, onClose, onUpdate, onDel
                                 <input type="text" {...register("title", { required: true })} className="input-field" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>
-                                <input type="text" {...register("tags")} className="input-field" />
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea {...register("description")} className="input-field" placeholder="Enter image description" rows={3} />
                             </div>
                             <div className="flex space-x-3 pt-2">
                                 <button type="submit" disabled={isPending} className="btn-primary">
@@ -117,7 +109,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, onClose, onUpdate, onDel
                                 </h3>
                                 {image.description && <div className="text-gray-600 mb-4">{image.description}</div>}
                                 <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
+                                    <div className="col-span-2">
                                         <span className="font-medium text-gray-600">Filename:</span>
                                         <p className="text-gray-800">{image.filename}</p>
                                     </div>
@@ -129,36 +121,27 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, onClose, onUpdate, onDel
                                         <span className="font-medium text-gray-600">Type:</span>
                                         <p className="text-gray-800">{image.mime_type}</p>
                                     </div>
-                                    {image.width && (
-                                        <div>
-                                            <span className="font-medium text-gray-600">Width:</span>
-                                            <p className="text-gray-800">{image.width}</p>
-                                        </div>
-                                    )}
-                                    {image.height && (
-                                        <div>
-                                            <span className="font-medium text-gray-600">Height:</span>
-                                            <p className="text-gray-800">{image.height}</p>
-                                        </div>
-                                    )}
-                                    {image.created_at && (
-                                        <div>
-                                            <span className="font-medium text-gray-600">Created:</span>
-                                            <p className="text-gray-800">{formatDate(image.created_at, "yyyy-MM-dd HH:mm")}</p>
-                                        </div>
-                                    )}
-                                    {image.updated_at && (
-                                        <div>
-                                            <span className="font-medium text-gray-600">Last updated:</span>
-                                            <p className="text-gray-800">{formatDate(image.updated_at, "yyyy-MM-dd HH:mm")}</p>
-                                        </div>
-                                    )}
+                                    <div>
+                                        <span className="font-medium text-gray-600">Width:</span>
+                                        <p className="text-gray-800">{image.width}</p>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-600">Height:</span>
+                                        <p className="text-gray-800">{image.height}</p>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-600">Created:</span>
+                                        <p className="text-gray-800">{image.created_at && formatDate(image.created_at, "yyyy-MM-dd HH:mm")}</p>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-600">Last updated:</span>
+                                        <p className="text-gray-800">{image.updated_at && formatDate(image.updated_at, "yyyy-MM-dd HH:mm")}</p>
+                                    </div>
                                 </div>
                             </div>
 
                             {tags.length > 0 && (
                                 <div>
-                                    <h4 className="font-medium mb-3 text-gray-700">Tags:</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {tags.map((tag) => (
                                             <span key={tag.id} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
