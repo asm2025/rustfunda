@@ -169,7 +169,7 @@ where
     async fn delete(
         &self,
         id: <<E as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
-    ) -> Result<DeleteResult>;
+    ) -> Result<Option<<E as EntityTrait>::Model>>;
 }
 
 #[async_trait]
@@ -185,4 +185,8 @@ where
         filter_related: Option<Box<dyn FilterRelatedCondition<E, R> + Send + Sync>>,
         pagination: Option<Pagination>,
     ) -> Result<ResultSet<ModelWithRelated<<E as EntityTrait>::Model, <R as EntityTrait>::Model>>>;
+    async fn get_with_related(
+        &self,
+        id: <<E as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+    ) -> Result<Option<ModelWithRelated<<E as EntityTrait>::Model, <R as EntityTrait>::Model>>>;
 }

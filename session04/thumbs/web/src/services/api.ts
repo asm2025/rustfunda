@@ -27,7 +27,7 @@ export const imageApi = {
                 "Content-Type": undefined,
             },
         }),
-    getImage: (id: number) => api.get<ImageModel>(`/${id}`),
+    getImage: (id: number) => api.get<ModelWithRelated<ImageModel, TagModel>>(`/${id}`),
     updateImage: (id: number, image: Partial<ImageModel>) => api.put<ImageModel>(`/${id}`, image),
     deleteImage: (id: number) => api.delete(`/${id}`),
 

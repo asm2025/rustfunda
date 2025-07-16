@@ -10,7 +10,12 @@ use axum::{
 use dotenvy::dotenv;
 use sea_orm::{prelude::*, *};
 use sea_orm_migration::prelude::*;
-use std::{fs, path::Path, sync::Arc, time::Duration};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 use tower_http::{
     cors::{Any, CorsLayer},
     services::ServeDir,
@@ -213,8 +218,8 @@ async fn image_count(
 async fn image_get(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
-) -> Result<Json<ImageModel>, (StatusCode, String)> {
-    match repo.get(id).await {
+) -> Result<Json<ModelWithRelated<ImageModel, TagModel>>, (StatusCode, String)> {
+    match repo.get_with_related(id).await {
         Ok(Some(image)) => Ok(Json(image)),
         Ok(None) => Err((StatusCode::NOT_FOUND, "Image not found".to_string())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
@@ -268,9 +273,8 @@ async fn image_add(
         .get("filename")
         .cloned()
         .unwrap_or_else(|| format!("{}.jpg", Uuid::new_v4()));
-    let images_env_dir = std::env::var("IMAGES_DIR").unwrap_or("data/images".to_string());
-    let images_dir = Path::new(&images_env_dir);
-    fs::create_dir_all(images_dir)
+    let images_dir = images_dir();
+    fs::create_dir_all(&images_dir)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let file_path = images_dir.join(&filename);
     fs::write(&file_path, &image_data).map_err(|e| {
@@ -300,9 +304,7 @@ async fn image_add(
 
     // Create thumbnail keeping aspect ratio (max 256px on longest side)
     let thumbnail = img.thumbnail(256, 256);
-    let base_name = file_path.file_stem().unwrap_or_default().to_string_lossy();
-    let extension = file_path.extension().unwrap_or_default().to_string_lossy();
-    let thumb_path = images_dir.join(&format!("{}_thumb.{}", base_name, extension));
+    let thumb_path = images_dir.join(&get_image_thumb_name(&filename));
     thumbnail.save(&thumb_path).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -345,7 +347,27 @@ async fn image_delete(
     axum_path(id): axum_path<i64>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     match repo.delete(id).await {
-        Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
+        Ok(Some(image)) => {
+            let images_dir = images_dir();
+            let filepath = images_dir.join(image.filename);
+
+            if filepath.exists() {
+                if let Err(e) = fs::remove_file(&filepath) {
+                    tracing::warn!("{}", e);
+                }
+            }
+
+            let thumbpath = get_image_thumb_path(filepath);
+
+            if thumbpath.exists() {
+                if let Err(e) = fs::remove_file(&thumbpath) {
+                    tracing::warn!("{}", e);
+                }
+            }
+
+            Ok((StatusCode::NO_CONTENT, ()))
+        }
+        Ok(None) => Err((StatusCode::NOT_FOUND, "Image not found.".to_string())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
@@ -468,6 +490,31 @@ async fn tag_image_remove(
         Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
+}
+
+fn images_dir() -> PathBuf {
+    let images_env_dir = std::env::var("IMAGES_DIR").unwrap_or("data/images".to_string());
+    PathBuf::from(images_env_dir)
+}
+
+fn get_image_thumb_name(filename: &str) -> String {
+    if filename.is_empty() {
+        return filename.to_owned();
+    }
+
+    let path = Path::new(filename);
+    let base_name = path.file_stem().unwrap_or_default().to_string_lossy();
+    let extension = path.extension().unwrap_or_default().to_string_lossy();
+    format!("{}_thumb.{}", base_name, extension)
+}
+
+fn get_image_thumb_path<P: AsRef<Path>>(filename: P) -> PathBuf {
+    let path = filename.as_ref();
+    let parent = path.parent().unwrap_or_else(|| Path::new(""));
+    let base_name = path.file_stem().unwrap_or_default().to_string_lossy();
+    let extension = path.extension().unwrap_or_default().to_string_lossy();
+    let thumb_file_name = format!("{}_thumb.{}", base_name, extension);
+    parent.join(thumb_file_name)
 }
 
 fn parse_i64(s: Option<&String>) -> Option<i64> {

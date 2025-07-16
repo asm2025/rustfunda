@@ -33,12 +33,20 @@ function App() {
         }
     };
 
-    const handleImageUploaded = (newImage: ImageModel) => {
-        setImagesSet((prev) => ({
-            data: [{ item: newImage, related: [] }, ...prev.data],
-            total: prev.total + 1,
-            pagination: prev.pagination,
-        }));
+    const handleImageUploaded = async (newImage: ImageModel) => {
+        try {
+            const response = await imageApi.getImage(newImage.id!);
+            setImagesSet((prev) => ({
+                data: [response.data, ...prev.data],
+                total: prev.total + 1,
+                pagination: prev.pagination,
+            }));
+        } catch (error) {
+            toast.error("Failed to load images");
+            console.error("Load images error:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleImageUpdate = (updatedImage: ImageModel) => {

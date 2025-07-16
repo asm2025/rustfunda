@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use migration::OnConflict;
 use sea_orm::{DeleteResult, JoinType, PaginatorTrait, QuerySelect, Set, prelude::*};
@@ -105,17 +105,27 @@ impl IRepository<TagEntity, UpdateTagDto> for TagRepository {
             .map_err(Into::into)
     }
 
-    async fn delete(&self, id: i64) -> Result<DeleteResult> {
+    async fn delete(&self, id: i64) -> Result<Option<TagModel>> {
+        let model = TagEntity::find_by_id(id)
+            .one(self.database())
+            .await
+            .map_err(anyhow::Error::from)?;
+        let Some(model) = model else {
+            return Err(anyhow!("Tag not found."));
+        };
+
         // First, delete the associations in ImageTag
         ImageTagEntity::delete_many()
-            .filter(ImageTagColumn::TagId.eq(id))
+            .filter(ImageTagColumn::ImageId.eq(id))
             .exec(&self.db)
             .await
             .map_err(anyhow::Error::from)?;
         TagEntity::delete_by_id(id)
             .exec(self.database())
             .await
-            .map_err(Into::into)
+            .map_err(anyhow::Error::from)?;
+
+        Ok(Some(model))
     }
 }
 
@@ -162,6 +172,22 @@ impl IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> for TagReposit
             total,
             pagination,
         })
+    }
+
+    async fn get_with_related(
+        &self,
+        id: i64,
+    ) -> Result<Option<ModelWithRelated<TagModel, ImageModel>>> {
+        let tag = <TagEntity as EntityTrait>::find_by_id(id)
+            .one(self.database())
+            .await?;
+        let Some(tag) = tag else { return Ok(None) };
+        let images = tag.find_related(ImageEntity).all(self.database()).await?;
+
+        Ok(Some(ModelWithRelated {
+            item: tag,
+            related: images,
+        }))
     }
 }
 

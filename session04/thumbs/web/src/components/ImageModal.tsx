@@ -63,21 +63,27 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-in">
-                <div className="p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-gray-800">Details</h2>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-                            ×
-                        </button>
-                    </div>
-
+        <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}>
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] shadow-2xl animate-scale-in flex flex-col">
+                <div className="p-6 flex justify-between items-center mb-6 flex-shrink-0">
+                    <h2 className="text-2xl font-bold text-gray-800 truncate">{image.title}</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+                        ×
+                    </button>
+                </div>
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto px-6 pb-6">
                     {/* Image Display */}
                     <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-6 flex items-center justify-center">
-                        <div className="text-gray-400 text-center">
-                            <ImageWithFallback src={imageApi.getThumbUri(image.filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
-                            <p className="font-medium">{image.filename}</p>
+                        <div className="flex flex-col items-center justify-center text-gray-400 text-center">
+                            <ImageWithFallback src={imageApi.getImageUri(image.filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
+                            <p className="p-2 text-sm truncate">{image.filename}</p>
                         </div>
                     </div>
 
