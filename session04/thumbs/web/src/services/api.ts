@@ -10,34 +10,36 @@ const api = axios.create({
     },
 });
 
-export const imageApi = {
-    getImageUri: (name: string) => `${API_BASE_URL}/images/${name}`,
+export const thumbsApi = {
+    getImageUri: (name: string) => `${API_BASE_URL}/assets/${name}`,
     getThumbUri: (name: string) => {
+        if (!name) return "";
         const lastDotIndex = name.lastIndexOf(".");
         const baseName = lastDotIndex !== -1 ? name.substring(0, lastDotIndex) : name;
         const extension = lastDotIndex !== -1 ? name.substring(lastDotIndex) : "";
-        return `${API_BASE_URL}/images/${baseName}_thumb${extension}`;
+        return `${API_BASE_URL}/assets/${baseName}_thumb${extension}`;
     },
+    getHome: () => api.get("/"),
+    getAbout: () => api.get("/about"),
+
     // Image endpoints
-    getImages: () => api.get<ResultSet<ModelWithRelated<ImageModel, TagModel>>>("/"),
-    getImageCount: () => api.get<number>("/count"),
+    getImages: () => api.get<ResultSet<ModelWithRelated<ImageModel, TagModel>>>("/images"),
+    getImageCount: () => api.get<number>("/images/count"),
     createImage: (formData: FormData) =>
-        api.post("/", formData, {
+        api.post("/images", formData, {
             headers: {
                 "Content-Type": undefined,
             },
         }),
-    getImage: (id: number) => api.get<ModelWithRelated<ImageModel, TagModel>>(`/${id}`),
-    updateImage: (id: number, image: Partial<ImageModel>) => api.put<ImageModel>(`/${id}`, image),
-    deleteImage: (id: number) => api.delete(`/${id}`),
+    getImage: (id: number) => api.get<ModelWithRelated<ImageModel, TagModel>>(`/images/${id}`),
+    updateImage: (id: number, image: Partial<ImageModel>) => api.put<ImageModel>(`/images/${id}`, image),
+    deleteImage: (id: number) => api.delete(`/images/${id}`),
 
     // Image tags endpoints
-    getImageTags: (id: number) => api.get<ResultSet<TagModel>>(`/${id}/tags/`),
-    addImageTag: (id: number, tag: string) => api.post(`/${id}/tags/`, { tag }),
-    removeImageTag: (id: number, tagId: number) => api.delete(`/${id}/tags/${tagId}`),
-};
+    getImageTags: (id: number) => api.get<ResultSet<TagModel>>(`/images/${id}/tags/`),
+    addImageTag: (id: number, tag: string) => api.post(`/images/${id}/tags/`, { tag }),
+    removeImageTag: (id: number, tagId: number) => api.delete(`/images/${id}/tags/${tagId}`),
 
-export const tagApi = {
     // Tag endpoints
     getTags: () => api.get<ResultSet<TagModel>>("/tags/"),
     getTagCount: () => api.get<number>("/tags/count"),

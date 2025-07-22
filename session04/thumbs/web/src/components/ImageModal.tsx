@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import humanize from "humanize-plus";
 import { format as formatDate } from "date-fns";
 import { ImageModel, TagModel } from "../types";
-import { imageApi } from "../services/api";
+import { thumbsApi } from "../services/api";
 import ImageWithFallback from "./ImageWithFallback";
 
 interface ImageModalProps {
@@ -34,7 +34,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
     const handleUpdate = async (data: FormData) => {
         startTransition(async () => {
             try {
-                const response = await imageApi.updateImage(image.id!, {
+                const response = await thumbsApi.updateImage(image.id!, {
                     title: data.title,
                     description: data.description,
                 });
@@ -51,7 +51,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
         if (window.confirm("Are you sure you want to delete this image?")) {
             startTransition(async () => {
                 try {
-                    await imageApi.deleteImage(image.id!);
+                    await thumbsApi.deleteImage(image.id!);
                     onDelete(image.id!);
                     toast.success("Image deleted successfully!");
                     onClose();
@@ -84,7 +84,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                     {/* Image Display */}
                     <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-6 flex items-center justify-center">
                         <div className="flex flex-col items-center justify-center text-gray-400 text-center">
-                            <ImageWithFallback src={imageApi.getImageUri(filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
+                            <ImageWithFallback src={thumbsApi.getImageUri(filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
                             <p className="p-2 text-sm truncate">{filename}</p>
                         </div>
                     </div>

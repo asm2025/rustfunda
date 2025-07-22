@@ -2,9 +2,10 @@ use ::image::ImageReader;
 use anyhow::Result;
 use axum::{
     Extension, Json, Router,
+    body::Body,
     extract::{Multipart, Path as axum_path},
     http::{HeaderValue, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{delete, get, post, put},
 };
 use dotenvy::dotenv;
@@ -17,6 +18,7 @@ use std::{
     sync::Arc,
     time::Duration,
 };
+use tokio_util::io::ReaderStream;
 use tower_http::{
     cors::{Any, CorsLayer},
     services::ServeDir,
@@ -173,12 +175,13 @@ fn setup_router() -> Router {
 
     tracing::info!("Configuring router");
     Router::new()
-        .route("/", get(image_list))
-        .route("/count", get(image_count))
-        .route("/{id}", get(image_get))
-        .route("/", post(image_add))
-        .route("/{id}", put(image_update))
-        .route("/{id}", delete(image_delete))
+        .route("/about", get(about))
+        .route("/images", get(image_list))
+        .route("/images/count", get(image_count))
+        .route("/images/{id}", get(image_get))
+        .route("/images", post(image_add))
+        .route("/images/{id}", put(image_update))
+        .route("/images/{id}", delete(image_delete))
         .route("/{id}/tags/", get(image_tag_list))
         .route("/{id}/tags/", post(image_tag_add))
         .route("/{id}/tags/{tag_id}", delete(image_tag_remove))
@@ -191,12 +194,25 @@ fn setup_router() -> Router {
         .route("/tags/{id}/images/", get(tag_image_list))
         .route("/tags/{id}/images/", post(tag_image_add))
         .route("/tags/{id}/images/{tag_id}", delete(tag_image_remove))
-        .nest_service("/images", ServeDir::new(images_path))
+        .nest_service("/assets", ServeDir::new(images_path))
         .fallback_service(ServeDir::new(static_path).append_index_html_on_directories(true))
         .layer(cors)
 }
 
 // Handlers
+async fn about() -> Result<impl IntoResponse, (StatusCode, String)> {
+    let file = tokio::fs::File::open("static/about.md")
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let stream = ReaderStream::new(file);
+    let body = Body::from_stream(stream);
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .body(body)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(response)
+}
+
 async fn image_list(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
 ) -> Result<Json<ResultSet<ModelWithRelated<ImageModel, TagModel>>>, (StatusCode, String)> {
