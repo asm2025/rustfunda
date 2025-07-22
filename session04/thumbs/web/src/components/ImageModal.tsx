@@ -62,6 +62,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
         }
     };
 
+    const filename = `${image.id}.${image.extension}`;
+
     return (
         <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
@@ -82,8 +84,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                     {/* Image Display */}
                     <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-6 flex items-center justify-center">
                         <div className="flex flex-col items-center justify-center text-gray-400 text-center">
-                            <ImageWithFallback src={imageApi.getImageUri(image.filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
-                            <p className="p-2 text-sm truncate">{image.filename}</p>
+                            <ImageWithFallback src={imageApi.getImageUri(filename)} alt={image.alt_text} className="max-w-full max-h-screen" phClassName="w-24 h-24 mx-auto mb-4" />
+                            <p className="p-2 text-sm truncate">{filename}</p>
                         </div>
                     </div>
 
@@ -117,7 +119,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div className="col-span-2">
                                         <span className="font-medium text-gray-600">Filename:</span>
-                                        <p className="text-gray-800">{image.filename}</p>
+                                        <p className="text-gray-800">{filename}</p>
                                     </div>
                                     <div>
                                         <span className="font-medium text-gray-600">Size:</span>

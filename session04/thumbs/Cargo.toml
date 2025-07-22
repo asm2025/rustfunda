@@ -24,3 +24,4 @@ chrono = { version = "0", features = ["serde"] }
 async-trait = "0"
 migration = { path = "./migration" }
 uuid = { version = "1", features = ["v4"] }
+mime_guess = "2"

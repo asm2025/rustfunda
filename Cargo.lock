@@ -4297,6 +4297,7 @@ dependencies = [
  "futures",
  "image",
  "migration",
+ "mime_guess",
  "sea-orm",
  "sea-orm-migration",
  "serde",

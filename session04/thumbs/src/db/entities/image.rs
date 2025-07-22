@@ -12,7 +12,7 @@ pub struct Model {
     pub id: i64,
     pub title: String,
     pub description: Option<String>,
-    pub filename: String,
+    pub extension: String,
     pub file_size: i64,
     pub mime_type: String,
     pub width: Option<i32>,
@@ -74,7 +74,7 @@ impl ActiveModelBehavior for ActiveModel {
 pub struct CreateImageDto {
     pub title: String,
     pub description: Option<String>,
-    pub filename: String,
+    pub extension: String,
     pub file_size: i64,
     pub mime_type: String,
     pub width: Option<i32>,
@@ -90,7 +90,7 @@ impl From<CreateImageDto> for Model {
             id: 0,
             title: req.title,
             description: req.description,
-            filename: req.filename,
+            extension: req.extension,
             file_size: req.file_size,
             mime_type: req.mime_type,
             width: req.width,
@@ -108,7 +108,7 @@ impl From<CreateImageDto> for ActiveModel {
             id: NotSet,
             title: Set(req.title),
             description: Set(req.description),
-            filename: Set(req.filename),
+            extension: Set(req.extension),
             file_size: Set(req.file_size),
             mime_type: Set(req.mime_type),
             width: Set(req.width),
@@ -124,7 +124,7 @@ impl From<CreateImageDto> for ActiveModel {
 pub struct UpdateImageDto {
     pub title: Option<String>,
     pub description: Option<String>,
-    pub filename: Option<String>,
+    pub extension: Option<String>,
     pub file_size: Option<i64>,
     pub mime_type: Option<String>,
     pub width: Option<i32>,
@@ -143,8 +143,8 @@ impl Merge<ActiveModel> for UpdateImageDto {
             model.description = Set(Some(description.clone()));
         }
 
-        if let Some(ref filename) = self.filename {
-            model.filename = Set(filename.clone());
+        if let Some(ref extension) = self.extension {
+            model.extension = Set(extension.clone());
         }
 
         if let Some(ref file_size) = self.file_size {

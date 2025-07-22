@@ -2,7 +2,7 @@ export interface ImageModel {
     id?: number;
     title: string;
     description?: string;
-    filename: string;
+    extension: string;
     file_size: number;
     mime_type: string;
     width?: number;

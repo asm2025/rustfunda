@@ -1,8 +1,8 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use sea_orm::{
-    Condition, DatabaseConnection, DeleteResult, EntityTrait, PrimaryKeyTrait, QueryFilter, Select,
-    SelectTwoMany,
+    Condition, DatabaseConnection, DatabaseTransaction, EntityTrait, PrimaryKeyTrait, QueryFilter,
+    Select, SelectTwoMany,
 };
 use serde::{Deserialize, Serialize};
 
@@ -141,6 +141,7 @@ impl<E: EntityTrait, R: EntityTrait> FilterRelatedCondition<E, R> for DirectCond
 #[async_trait]
 pub trait IHasDatabase {
     fn database(&self) -> &DatabaseConnection;
+    async fn begin_transaction(&self) -> Result<DatabaseTransaction>;
 }
 
 #[async_trait]

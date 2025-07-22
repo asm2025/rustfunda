@@ -26,7 +26,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Images::Title).string_len(256).not_null())
                     .col(ColumnDef::new(Images::Description).string_len(2048))
-                    .col(ColumnDef::new(Images::Filename).string_len(256).not_null())
+                    .col(ColumnDef::new(Images::Extension).string_len(64).not_null())
                     .col(ColumnDef::new(Images::FileSize).big_integer().not_null())
                     .col(ColumnDef::new(Images::MimeType).string_len(256).not_null())
                     .col(ColumnDef::new(Images::Width).integer())
@@ -41,10 +41,10 @@ impl MigrationTrait for Migration {
         manager
             .create_index(
                 Index::create()
-                    .name("idx-images-filename")
+                    .name("idx-images-extension")
                     .if_not_exists()
                     .table(Images::Table)
-                    .col(Images::Filename)
+                    .col(Images::Extension)
                     .to_owned(),
             )
             .await?;

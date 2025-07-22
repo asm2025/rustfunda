@@ -8,7 +8,7 @@ pub enum Images {
     Id,
     Title,
     Description,
-    Filename,
+    Extension,
     FileSize,
     MimeType,
     Width,

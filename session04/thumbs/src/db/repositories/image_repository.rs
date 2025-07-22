@@ -1,7 +1,10 @@
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use migration::OnConflict;
-use sea_orm::{DeleteResult, JoinType, PaginatorTrait, QuerySelect, Set, prelude::*};
+use sea_orm::{
+    DatabaseTransaction, DeleteResult, JoinType, PaginatorTrait, QuerySelect, Set,
+    TransactionTrait, prelude::*,
+};
 
 use crate::db::prelude::*;
 
@@ -35,6 +38,10 @@ impl ImageRepository {
 impl IHasDatabase for ImageRepository {
     fn database(&self) -> &DatabaseConnection {
         &self.db
+    }
+
+    async fn begin_transaction(&self) -> Result<DatabaseTransaction> {
+        self.db.begin().await.map_err(anyhow::Error::from)
     }
 }
 

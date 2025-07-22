@@ -8,6 +8,7 @@ use axum::{
     routing::{delete, get, post, put},
 };
 use dotenvy::dotenv;
+use mime_guess::get_mime_extensions_str;
 use sea_orm::{prelude::*, *};
 use sea_orm_migration::prelude::*;
 use std::{
@@ -24,7 +25,6 @@ use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{
     EnvFilter, filter::LevelFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt,
 };
-use uuid::Uuid;
 
 use migration::{Migrator, MigratorTrait};
 
@@ -230,6 +230,7 @@ async fn image_add(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
     mut multipart: Multipart,
 ) -> Result<Json<ImageModel>, (StatusCode, String)> {
+    // Read the form data from the multipart fields
     let mut fields = std::collections::HashMap::new();
     let mut image_bytes = None;
 
@@ -259,32 +260,14 @@ async fn image_add(
     }
 
     // Unwrap the image_bytes and check if it has data
-    let image_data = image_bytes.ok_or((
-        StatusCode::BAD_REQUEST,
-        "No image file provided".to_string(),
-    ))?;
+    let image_data =
+        image_bytes.ok_or((StatusCode::BAD_REQUEST, "No image provided".to_string()))?;
 
     if image_data.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, "Image file is empty".to_string()));
+        return Err((StatusCode::BAD_REQUEST, "Image is empty".to_string()));
     }
 
-    // Save the image file
-    let filename = fields
-        .get("filename")
-        .cloned()
-        .unwrap_or_else(|| format!("{}.jpg", Uuid::new_v4()));
-    let images_dir = images_dir();
-    fs::create_dir_all(&images_dir)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    let file_path = images_dir.join(&filename);
-    fs::write(&file_path, &image_data).map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to save image: {}", e),
-        )
-    })?;
-
-    // Load image to get dimensions and create thumbnail
+    // Load image to get dimensions
     let img = ImageReader::new(std::io::Cursor::new(&image_data))
         .with_guessed_format()
         .map_err(|e| {
@@ -301,6 +284,65 @@ async fn image_add(
             )
         })?;
     let (width, height) = (img.width(), img.height());
+    let images_dir = images_dir();
+    fs::create_dir_all(&images_dir)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // start a transaction in case saving the image fails
+    let transaction = repo
+        .begin_transaction()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let mime_type = fields.get("mime_type").cloned().unwrap_or_default();
+    let filename = fields.get("filename").cloned().unwrap_or_default();
+    let mut extension = if filename.is_empty() {
+        None
+    } else {
+        Path::new(&filename).extension().and_then(|x| x.to_str())
+    };
+
+    if extension.is_none() {
+        extension = if !mime_type.is_empty() {
+            get_mime_extensions_str(&mime_type)
+                .and_then(|x| x.first())
+                .map(|x| *x)
+        } else {
+            None
+        }
+    }
+
+    let extension = extension.unwrap_or("bin");
+    let title = fields.get("title").cloned().unwrap_or(filename.clone());
+    let alt_text = fields.get("alt_text").cloned().unwrap_or(title.clone());
+
+    // Assign the missing information to the following image model and let the repository create the data record
+    let image_model = CreateImageDto {
+        title: title,
+        description: Some(fields.get("description").cloned().unwrap_or_default()),
+        extension: extension.to_string(),
+        file_size: image_data.len() as i64,
+        mime_type: mime_type,
+        width: Some(width as i32),
+        height: Some(height as i32),
+        alt_text: Some(alt_text),
+        tags: Some(fields.get("tags").cloned().unwrap_or_default()),
+    };
+
+    let image_model = match repo.create_with_tags(image_model).await {
+        Ok(image_model) => image_model,
+        Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    };
+
+    // Save the image file
+    let filename = format!("{}.{}", image_model.id, extension);
+    let file_path = images_dir.join(&filename);
+    fs::write(&file_path, &image_data).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to save image: {}", e),
+        )
+    })?;
 
     // Create thumbnail keeping aspect ratio (max 256px on longest side)
     let thumbnail = img.thumbnail(256, 256);
@@ -312,22 +354,13 @@ async fn image_add(
         )
     })?;
 
-    // Assign the missing information to the following image model and let the repository create the data record
-    let image_model = CreateImageDto {
-        title: fields.get("title").cloned().unwrap_or_default(),
-        description: Some(fields.get("description").cloned().unwrap_or_default()),
-        filename: filename,
-        file_size: image_data.len() as i64,
-        mime_type: fields.get("mime_type").cloned().unwrap_or_default(),
-        width: Some(width as i32),
-        height: Some(height as i32),
-        alt_text: Some(fields.get("alt_text").cloned().unwrap_or_default()),
-        tags: Some(fields.get("tags").cloned().unwrap_or_default()),
-    };
-
-    match repo.create_with_tags(image_model).await {
-        Ok(created) => Ok(Json(created)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    match transaction.commit().await {
+        Ok(_) => Ok(Json(image_model)),
+        Err(e) => {
+            let _ = fs::remove_file(&file_path);
+            let _ = fs::remove_file(&thumb_path);
+            Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        }
     }
 }
 
@@ -349,7 +382,7 @@ async fn image_delete(
     match repo.delete(id).await {
         Ok(Some(image)) => {
             let images_dir = images_dir();
-            let filepath = images_dir.join(image.filename);
+            let filepath = images_dir.join(image.extension);
 
             if filepath.exists() {
                 if let Err(e) = fs::remove_file(&filepath) {
@@ -492,6 +525,7 @@ async fn tag_image_remove(
     }
 }
 
+// helper functions
 fn images_dir() -> PathBuf {
     let images_env_dir = std::env::var("IMAGES_DIR").unwrap_or("data/images".to_string());
     PathBuf::from(images_env_dir)
