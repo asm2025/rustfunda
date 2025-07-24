@@ -49,7 +49,7 @@ export const thumbsApi = {
     deleteTag: (id: number) => api.delete(`/tags/${id}`),
 
     // Tag images endpoints
-    getTagImages: (id: number) => api.get<ResultSet<ImageModel>>(`/tags/${id}/images/`),
+    getTagImages: (id: number) => api.get<ResultSet<ModelWithRelated<ImageModel, TagModel>>>(`/tags/${id}/images/`),
     addTagImage: (id: number, imageId: number) => api.post(`/tags/${id}/images/`, { imageId }),
     removeTagImage: (id: number, imageId: number) => api.delete(`/tags/${id}/images/${imageId}`),
 };

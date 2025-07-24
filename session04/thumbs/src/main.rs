@@ -514,8 +514,8 @@ async fn tag_delete(
 async fn tag_image_list(
     Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
-) -> Result<Json<ResultSet<ImageModel>>, (StatusCode, String)> {
-    match repo.list_images(id, None, None).await {
+) -> Result<Json<ResultSet<ModelWithRelated<ImageModel, TagModel>>>, (StatusCode, String)> {
+    match repo.list_images(id, None, None, None).await {
         Ok(images) => Ok(Json(images)),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

@@ -3,38 +3,53 @@ import toast from "react-hot-toast";
 import ImageUpload from "../components/ImageUpload";
 import ImageGrid from "../components/ImageGrid";
 import ImageModal from "../components/ImageModal";
+import TagFilter from "../components/TagFilter";
 import { ResultSet, ImageModel, ModelWithRelated, TagModel } from "../types";
 import { thumbsApi } from "../services/api";
 
 const Images: React.FC = () => {
-    const [imagesSet, setImagesSet] = useState<ResultSet<ModelWithRelated<ImageModel, TagModel>>>({
+    const [images, setImages] = useState<ResultSet<ModelWithRelated<ImageModel, TagModel>>>({
         data: [],
         total: 0,
     });
     const [selectedImage, setSelectedImage] = useState<ModelWithRelated<ImageModel, TagModel> | null>(null);
+    const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showUpload, setShowUpload] = useState(false);
 
     useEffect(() => {
         loadImages();
-    }, []);
+    }, [selectedTagId]);
 
     const loadImages = async () => {
         try {
-            const response = await thumbsApi.getImages();
-            setImagesSet(response.data);
+            let response;
+
+            if (!selectedTagId) {
+                response = await thumbsApi.getImages();
+            } else {
+                response = await thumbsApi.getTagImages(selectedTagId);
+            }
+
+            setImages(response.data);
         } catch (error) {
             toast.error("Failed to load images");
             console.error("Load images error:", error);
+            setImages({ data: [], total: 0 });
         } finally {
             setIsLoading(false);
         }
     };
 
+    const handleTagSelect = (tagId: number | null) => {
+        setSelectedTagId(tagId);
+        setSelectedImage(null);
+    };
+
     const handleImageUploaded = async (newImage: ImageModel) => {
         try {
             const response = await thumbsApi.getImage(newImage.id!);
-            setImagesSet((prev) => ({
+            setImages((prev) => ({
                 data: [response.data, ...prev.data],
                 total: prev.total + 1,
                 pagination: prev.pagination,
@@ -47,16 +62,16 @@ const Images: React.FC = () => {
     };
 
     const handleImageUpdate = (updatedImage: ImageModel) => {
-        setImagesSet((prev) => ({
+        setImages((prev) => ({
             ...prev,
             data: prev.data.map((model) => (model.item.id === updatedImage.id ? { item: updatedImage, related: model.related } : model)),
         }));
-        const selectedImg = imagesSet.data.find((e) => e.item.id === updatedImage.id);
+        const selectedImg = images.data.find((e) => e.item.id === updatedImage.id);
         setSelectedImage(selectedImg || null);
     };
 
     const handleImageDelete = (imageId: number) => {
-        setImagesSet((prev) => ({
+        setImages((prev) => ({
             ...prev,
             data: prev.data.filter((model) => model.item.id !== imageId),
             total: prev.total - 1,
@@ -74,7 +89,7 @@ const Images: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* Upload Button */}
+            {/* Header */}
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-900">Images</h1>
                 <button type="button" onClick={() => setShowUpload(true)} className="btn-primary flex items-center gap-2">
@@ -85,13 +100,20 @@ const Images: React.FC = () => {
                 </button>
             </div>
 
+            {/* Tag Filter */}
+            <TagFilter selectedTagId={selectedTagId} onTagSelect={handleTagSelect} />
+
             {/* Images Grid */}
-            {!imagesSet.data || imagesSet.data.length === 0 ? (
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                    <div className="text-xl">Loading images...</div>
+                </div>
+            ) : images.data.length === 0 ? (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 text-lg">No images uploaded yet. Upload your first image!</p>
+                    <p className="text-gray-500 text-lg">{selectedTagId === null ? "No images uploaded yet. Upload your first image!" : "No images found with the selected tag."}</p>
                 </div>
             ) : (
-                <ImageGrid images={imagesSet.data} selectedImage={selectedImage} onImageSelect={setSelectedImage} />
+                <ImageGrid images={images.data} selectedImage={selectedImage} onImageSelect={setSelectedImage} />
             )}
 
             {/* Upload Modal */}

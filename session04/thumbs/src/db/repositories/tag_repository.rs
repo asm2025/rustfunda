@@ -2,7 +2,7 @@ use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use migration::OnConflict;
 use sea_orm::{
-    DatabaseTransaction, DeleteResult, JoinType, PaginatorTrait, QuerySelect, Set,
+    DatabaseTransaction, DeleteResult, PaginatorTrait, QuerySelect, QueryTrait, Set,
     TransactionTrait, prelude::*,
 };
 
@@ -14,8 +14,11 @@ pub trait ITagRepository: IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageE
         &self,
         id: i64,
         filter: Option<Box<dyn FilterCondition<ImageEntity> + Send + Sync>>,
+        filter_related: Option<
+            Box<dyn FilterRelatedCondition<ImageEntity, TagEntity> + Send + Sync>,
+        >,
         pagination: Option<Pagination>,
-    ) -> Result<ResultSet<ImageModel>>;
+    ) -> Result<ResultSet<ModelWithRelated<ImageModel, TagModel>>>;
     async fn add_image(&self, id: i64, related_id: i64) -> Result<ImageTagModel>;
     async fn remove_image(&self, id: i64, related_id: i64) -> Result<DeleteResult>;
     async fn add_images(&self, id: i64, images: Vec<i64>) -> Result<u64>;
@@ -123,7 +126,7 @@ impl IRepository<TagEntity, UpdateTagDto> for TagRepository {
 
         // First, delete the associations in ImageTag
         ImageTagEntity::delete_many()
-            .filter(ImageTagColumn::ImageId.eq(id))
+            .filter(ImageTagColumn::TagId.eq(id))
             .exec(&self.db)
             .await
             .map_err(anyhow::Error::from)?;
@@ -204,29 +207,45 @@ impl ITagRepository for TagRepository {
         &self,
         id: i64,
         filter: Option<Box<dyn FilterCondition<ImageEntity> + Send + Sync>>,
+        filter_related: Option<
+            Box<dyn FilterRelatedCondition<ImageEntity, TagEntity> + Send + Sync>,
+        >,
         pagination: Option<Pagination>,
-    ) -> Result<ResultSet<ImageModel>> {
-        let mut query = <ImageEntity as EntityTrait>::find()
-            .join(
-                JoinType::InnerJoin,
-                ImageTagEntity::belongs_to(ImageEntity)
-                    .from(ImageTagColumn::ImageId)
-                    .to(ImageColumn::Id)
-                    .into(),
-            )
-            .filter(ImageTagColumn::TagId.eq(id));
+    ) -> Result<ResultSet<ModelWithRelated<ImageModel, TagModel>>> {
+        let image_ids = <ImageTagEntity as EntityTrait>::find()
+            .filter(ImageTagColumn::TagId.eq(id))
+            .select_only()
+            .column(ImageTagColumn::ImageId)
+            .into_query();
+        let mut filter_query =
+            <ImageEntity as EntityTrait>::find().filter(ImageColumn::Id.in_subquery(image_ids));
 
         if let Some(f) = &filter {
-            query = f.apply(query);
+            filter_query = f.apply(filter_query);
         }
 
-        let total = query.clone().count(self.database()).await?;
+        let count_query = filter_query.clone();
+        let total = count_query.count(self.database()).await?;
+        let mut query = filter_query.find_with_related(TagEntity);
+
+        if let Some(l) = &filter_related {
+            query = l.apply(query);
+        }
 
         if let Some(p) = pagination {
             query = query.offset((p.page - 1) * p.page_size).limit(p.page_size);
         }
 
-        let data = query.all(self.database()).await?;
+        let data = query
+            .all(self.database())
+            .await?
+            .into_iter()
+            .map(|(image_model, tag_models)| ModelWithRelated {
+                item: image_model,
+                related: tag_models,
+            })
+            .collect();
+
         Ok(ResultSet {
             data,
             total,
