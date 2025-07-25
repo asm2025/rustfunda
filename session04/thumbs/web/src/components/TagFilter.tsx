@@ -28,21 +28,33 @@ const TagFilter: React.FC<TagFilterProps> = ({ selectedTagId, onTagSelect }) => 
     }, []);
 
     if (isLoading) {
-        return <div className="text-sm text-gray-500">Loading tags...</div>;
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <div className="text-sm text-gray-500">Loading tags...</div>
+            </div>
+        );
     }
 
     return (
-        <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Filter by Tags</h3>
-            <div className="flex flex-wrap gap-2">
-                <button onClick={() => onTagSelect(null)} className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${selectedTagId === null ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}>
+        <div className="h-screen flex flex-col border-r border-gray-200">
+            {/* Header - Fixed */}
+            <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold">Filter by Tags</h3>
+            </div>
+            {/* Tags - Scrollable */}
+            <div className="flex flex-wrap items-center">
+                <button onClick={() => onTagSelect(null)} className={`px-5 py-2 m-1 rounded-full text-sm font-medium transition-colors ${selectedTagId === null ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-100 border border-gray-200"}`}>
                     All Images
                 </button>
-                {tags.map((tag) => (
-                    <button key={tag.id} onClick={() => onTagSelect(tag.id!)} className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${selectedTagId === tag.id ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}>
-                        {tag.name}
-                    </button>
-                ))}
+                {tags?.length > 0 &&
+                    tags.map((tag) => (
+                        <button
+                            key={tag.id}
+                            onClick={() => onTagSelect(tag.id!)}
+                            className={`px-5 py-2 m-1 rounded-full text-sm font-medium transition-colors ${selectedTagId === tag.id ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-100 border border-gray-200"}`}>
+                            {tag.name}
+                        </button>
+                    ))}
             </div>
         </div>
     );
