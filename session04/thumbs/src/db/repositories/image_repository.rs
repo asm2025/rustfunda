@@ -117,27 +117,13 @@ impl IRepository<ImageEntity, UpdateImageDto> for ImageRepository {
             .map_err(Into::into)
     }
 
-    async fn delete(&self, id: i64) -> Result<Option<ImageModel>> {
-        let model = ImageEntity::find_by_id(id)
-            .one(self.database())
-            .await
-            .map_err(anyhow::Error::from)?;
-        let Some(model) = model else {
-            return Err(anyhow!("Image not found."));
-        };
-
-        // First, delete the associations in ImageTag
-        ImageTagEntity::delete_many()
-            .filter(ImageTagColumn::ImageId.eq(id))
-            .exec(&self.db)
-            .await
-            .map_err(anyhow::Error::from)?;
+    async fn delete(&self, id: i64) -> Result<()> {
         ImageEntity::delete_by_id(id)
             .exec(self.database())
             .await
             .map_err(anyhow::Error::from)?;
 
-        Ok(Some(model))
+        Ok(())
     }
 }
 
@@ -200,6 +186,14 @@ impl IRepositoryWithRelated<ImageEntity, UpdateImageDto, TagEntity> for ImageRep
             item: image,
             related: tags,
         }))
+    }
+
+    async fn delete_related(&self, id: i64) -> Result<()> {
+        ImageTagEntity::delete_many()
+            .filter(ImageTagColumn::ImageId.eq(id))
+            .exec(self.database())
+            .await?;
+        Ok(())
     }
 }
 

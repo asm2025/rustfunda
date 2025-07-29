@@ -115,27 +115,13 @@ impl IRepository<TagEntity, UpdateTagDto> for TagRepository {
             .map_err(Into::into)
     }
 
-    async fn delete(&self, id: i64) -> Result<Option<TagModel>> {
-        let model = TagEntity::find_by_id(id)
-            .one(self.database())
-            .await
-            .map_err(anyhow::Error::from)?;
-        let Some(model) = model else {
-            return Err(anyhow!("Tag not found."));
-        };
-
-        // First, delete the associations in ImageTag
-        ImageTagEntity::delete_many()
-            .filter(ImageTagColumn::TagId.eq(id))
-            .exec(&self.db)
-            .await
-            .map_err(anyhow::Error::from)?;
+    async fn delete(&self, id: i64) -> Result<()> {
         TagEntity::delete_by_id(id)
             .exec(self.database())
             .await
             .map_err(anyhow::Error::from)?;
 
-        Ok(Some(model))
+        Ok(())
     }
 }
 
@@ -198,6 +184,14 @@ impl IRepositoryWithRelated<TagEntity, UpdateTagDto, ImageEntity> for TagReposit
             item: tag,
             related: images,
         }))
+    }
+
+    async fn delete_related(&self, id: i64) -> Result<()> {
+        ImageTagEntity::delete_many()
+            .filter(ImageTagColumn::TagId.eq(id))
+            .exec(self.database())
+            .await?;
+        Ok(())
     }
 }
 

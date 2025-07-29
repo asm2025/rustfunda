@@ -395,28 +395,42 @@ async fn image_delete(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match repo.delete(id).await {
-        Ok(Some(image)) => {
-            let images_dir = images_dir();
-            let filepath = images_dir.join(image.extension);
+    // start a transaction in case saving the image fails
+    let transaction = repo
+        .begin_transaction()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let image = repo
+        .get(id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Image not found.".to_string()))?;
+    repo.delete_related(id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    if let Err(e) = repo.delete(id).await {
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
+    }
 
-            if filepath.exists() {
-                if let Err(e) = fs::remove_file(&filepath) {
-                    tracing::warn!("{}", e);
-                }
-            }
+    let images_dir = images_dir();
+    let filepath = images_dir.join(format!("{}.{}", id, image.extension));
 
-            let thumbpath = get_image_thumb_path(filepath);
-
-            if thumbpath.exists() {
-                if let Err(e) = fs::remove_file(&thumbpath) {
-                    tracing::warn!("{}", e);
-                }
-            }
-
-            Ok((StatusCode::NO_CONTENT, ()))
+    if filepath.exists() {
+        if let Err(e) = fs::remove_file(&filepath) {
+            tracing::warn!("{}", e);
         }
-        Ok(None) => Err((StatusCode::NOT_FOUND, "Image not found.".to_string())),
+    }
+
+    let thumbpath = get_image_thumb_path(filepath);
+
+    if thumbpath.exists() {
+        if let Err(e) = fs::remove_file(&thumbpath) {
+            tracing::warn!("{}", e);
+        }
+    }
+
+    match transaction.commit().await {
+        Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }
@@ -505,10 +519,21 @@ async fn tag_delete(
     Extension(repo): Extension<Arc<dyn ITagRepository + Send + Sync>>,
     axum_path(id): axum_path<i64>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match repo.delete(id).await {
-        Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
-    }
+    let transaction = repo
+        .begin_transaction()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    repo.delete_related(id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    repo.delete(id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    transaction
+        .commit()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok((StatusCode::NO_CONTENT, ()))
 }
 
 async fn tag_image_list(

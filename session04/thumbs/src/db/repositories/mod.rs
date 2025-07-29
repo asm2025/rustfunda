@@ -170,7 +170,7 @@ where
     async fn delete(
         &self,
         id: <<E as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
-    ) -> Result<Option<<E as EntityTrait>::Model>>;
+    ) -> Result<()>;
 }
 
 #[async_trait]
@@ -190,4 +190,8 @@ where
         &self,
         id: <<E as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
     ) -> Result<Option<ModelWithRelated<<E as EntityTrait>::Model, <R as EntityTrait>::Model>>>;
+    async fn delete_related(
+        &self,
+        id: <<E as EntityTrait>::PrimaryKey as PrimaryKeyTrait>::ValueType,
+    ) -> Result<()>;
 }
