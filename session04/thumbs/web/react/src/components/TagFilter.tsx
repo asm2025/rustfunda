@@ -39,7 +39,7 @@ const TagFilter: React.FC<TagFilterProps> = ({ selectedTagId, onTagSelect }) => 
         <div className="h-screen flex flex-col border-r border-gray-200">
             {/* Header - Fixed */}
             <div className="p-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold">Filter by Tags</h3>
+                <h3 className="text-lg font-semibold">Tags</h3>
             </div>
             {/* Tags - Scrollable */}
             <div className="flex flex-wrap items-center">

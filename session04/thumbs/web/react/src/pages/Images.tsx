@@ -90,7 +90,7 @@ const Images: React.FC = () => {
     return (
         <div className="flex space-x-6">
             {/* Sidebar */}
-            <aside className="w-64 flex-shrink-0">
+            <aside className="w-48 flex-shrink-0">
                 {/* Tag Filter */}
                 <TagFilter selectedTagId={selectedTagId} onTagSelect={handleTagSelect} />
             </aside>
@@ -100,11 +100,10 @@ const Images: React.FC = () => {
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <h1 className="text-3xl font-bold text-gray-900">Images</h1>
-                    <button type="button" onClick={() => setShowUpload(true)} className="btn-primary flex items-center gap-2">
+                    <button type="button" title="Upload" onClick={() => setShowUpload(true)} className="btn-primary flex items-center gap-2">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        Upload
                     </button>
                 </div>
 
@@ -118,7 +117,7 @@ const Images: React.FC = () => {
                         <p className="text-gray-500 text-lg">{selectedTagId === null ? "No images uploaded yet. Upload your first image!" : "No images found with the selected tag."}</p>
                     </div>
                 ) : (
-                    <ImageGrid images={images.data} selectedImage={selectedImage} onImageSelect={setSelectedImage} />
+                    <ImageGrid images={images.data} selectedImage={selectedImage} onImageSelect={setSelectedImage} onDelete={handleImageDelete} />
                 )}
 
                 {/* Upload Modal */}
