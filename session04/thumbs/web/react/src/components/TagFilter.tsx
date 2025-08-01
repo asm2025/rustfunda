@@ -19,7 +19,8 @@ const TagFilter: React.FC<TagFilterProps> = ({ selectedTagId, onTagSelect }) => 
                 const response = await thumbsApi.getTags();
                 setTags(response.data.data);
             } catch (error) {
-                toast.error("Failed to load tags");
+                toast.error("Failed to load tags.");
+                console.error(error);
             } finally {
                 setIsLoading(false);
             }
@@ -43,7 +44,10 @@ const TagFilter: React.FC<TagFilterProps> = ({ selectedTagId, onTagSelect }) => 
             </div>
             {/* Tags - Scrollable */}
             <div className="flex flex-wrap items-center">
-                <button onClick={() => onTagSelect(null)} className={`px-5 py-2 m-1 rounded-full text-sm font-medium transition-colors ${selectedTagId === null ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-100 border border-gray-200"}`}>
+                <button
+                    type="button"
+                    onClick={() => onTagSelect(null)}
+                    className={`px-5 py-2 m-1 rounded-full text-sm font-medium transition-colors ${selectedTagId === null ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-100 border border-gray-200"}`}>
                     All Images
                 </button>
                 {tags?.length > 0 &&

@@ -12,6 +12,7 @@ use dotenvy::dotenv;
 use mime_guess::get_mime_extensions_str;
 use sea_orm::{prelude::*, *};
 use sea_orm_migration::prelude::*;
+use serde::Deserialize;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -32,6 +33,11 @@ use migration::{Migrator, MigratorTrait};
 
 mod db;
 use db::prelude::*;
+
+#[derive(Deserialize)]
+struct AddTagRequest {
+    tag: String,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -182,9 +188,9 @@ fn setup_router() -> Router {
         .route("/images", post(image_add))
         .route("/images/{id}", put(image_update))
         .route("/images/{id}", delete(image_delete))
-        .route("/{id}/tags/", get(image_tag_list))
-        .route("/{id}/tags/", post(image_tag_add))
-        .route("/{id}/tags/{tag_id}", delete(image_tag_remove))
+        .route("/images/{id}/tags/", get(image_tag_list))
+        .route("/images/{id}/tags/", post(image_tag_add))
+        .route("/images/{id}/tags/{tag_id}", delete(image_tag_remove))
         .route("/tags/", get(tag_list))
         .route("/tags/count", get(tag_count))
         .route("/tags/{id}", get(tag_get))
@@ -447,9 +453,10 @@ async fn image_tag_list(
 
 async fn image_tag_add(
     Extension(repo): Extension<Arc<dyn IImageRepository + Send + Sync>>,
-    axum_path((id, tag)): axum_path<(i64, String)>,
+    axum_path(id): axum_path<i64>,
+    Json(payload): Json<AddTagRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    match repo.add_tags_from_str(id, &tag).await {
+    match repo.add_tags_from_str(id, &payload.tag).await {
         Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }

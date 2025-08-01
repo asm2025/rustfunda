@@ -23,7 +23,8 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick, isSelected, onDel
                     onDelete(image.id!);
                     toast.success("Image deleted successfully!");
                 } catch (error) {
-                    toast.error("Failed to delete image");
+                    toast.error("Failed to delete image.");
+                    console.error(error);
                 }
             });
         }

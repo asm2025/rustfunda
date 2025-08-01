@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import humanize from "humanize-plus";
 import { format as formatDate } from "date-fns";
-import { ImageModel, TagModel } from "../types";
+import PortalDropdown from "./PortalDropdown";
+import { ModelWithRelated, ImageModel, TagModel } from "../types";
 import { thumbsApi } from "../services/api";
 import ImageWithFallback from "./ImageWithFallback";
 
@@ -11,7 +12,7 @@ interface ImageModalProps {
     image: ImageModel;
     tags: TagModel[];
     onClose: () => void;
-    onUpdate: (image: ImageModel) => void;
+    onUpdate: (image: ModelWithRelated<ImageModel, TagModel>) => void;
     onDelete: (imageId: number) => void;
 }
 
@@ -27,7 +28,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
     const [availableTags, setAvailableTags] = useState<TagModel[]>([]);
     const [tagSearchQuery, setTagSearchQuery] = useState("");
     const [isLoadingTags, setIsLoadingTags] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const addTagButtonRef = useRef<HTMLButtonElement>(null);
 
     const { register, handleSubmit, setValue } = useForm<FormData>();
 
@@ -43,26 +44,14 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
         }
     }, [showTagDropdown]);
 
-    useEffect(() => {
-        // Close dropdown when clicking outside
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setShowTagDropdown(false);
-                setTagSearchQuery("");
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
     const loadAvailableTags = async () => {
         setIsLoadingTags(true);
         try {
             const response = await thumbsApi.getTags();
             setAvailableTags(response.data.data || []);
         } catch (error) {
-            toast.error("Failed to load tags");
+            toast.error("Failed to load tags.");
+            console.error(error);
         } finally {
             setIsLoadingTags(false);
         }
@@ -79,7 +68,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                 setIsEditing(false);
                 toast.success("Image updated successfully!");
             } catch (error) {
-                toast.error("Failed to update image");
+                toast.error("Failed to update image.");
+                console.error(error);
             }
         });
     };
@@ -93,7 +83,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                     toast.success("Image deleted successfully!");
                     onClose();
                 } catch (error) {
-                    toast.error("Failed to delete image");
+                    toast.error("Failed to delete image.");
+                    console.error(error);
                 }
             });
         }
@@ -109,7 +100,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
             setTagSearchQuery("");
             toast.success(`Tag "${tagName}" added successfully!`);
         } catch (error) {
-            toast.error("Failed to add tag");
+            toast.error("Failed to add tag.");
+            console.error(error);
         }
     };
 
@@ -121,7 +113,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
             onUpdate(updatedImage.data);
             toast.success(`Tag "${tagName}" removed successfully!`);
         } catch (error) {
-            toast.error("Failed to remove tag");
+            toast.error("Failed to remove tag.");
+            console.error(error);
         }
     };
 
@@ -219,27 +212,31 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                                 </div>
 
                                 <div className="flex flex-wrap gap-2">
-                                    {tags.length > 0 ? (
+                                    {tags.length > 0 &&
                                         tags.map((tag) => (
-                                            <div key={tag.id} className="inline-flex items-center bg-blue-100 text-blue-800 rounded-full text-sm font-medium overflow-hidden">
+                                            <div key={tag.id} className="inline-flex items-center bg-blue-100 text-blue-800 rounded-full p-1 text-sm font-medium overflow-hidden">
                                                 <span className="px-3 py-1">{tag.name}</span>
-                                                <button type="button" onClick={() => handleRemoveTag(tag.id!, tag.name)} className="px-1 py-1 hover:bg-blue-200 transition-colors" title={`Remove ${tag.name} tag`}>
+                                                <button type="button" onClick={() => handleRemoveTag(tag.id!, tag.name)} className="p-1 m-1 hover:bg-blue-200 transition-colors" title={`Remove ${tag.name} tag`}>
                                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                                     </svg>
                                                 </button>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <span className="text-gray-500 text-sm">No tags added</span>
-                                    )}
-                                    <div className="relative" ref={dropdownRef}>
-                                        <button type="button" title="Add Tag" onClick={() => setShowTagDropdown(!showTagDropdown)} className="btn-primary flex items-center gap-2 p-1">
+                                        ))}
+                                    <div className="relative">
+                                        <button type="button" ref={addTagButtonRef} title="Add Tag" onClick={() => setShowTagDropdown(!showTagDropdown)} className="btn-primary flex items-center gap-2 p-1">
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                             </svg>
                                         </button>
-
+                                    </div>
+                                    <PortalDropdown
+                                        anchorRef={addTagButtonRef}
+                                        open={showTagDropdown}
+                                        onClose={() => {
+                                            setShowTagDropdown(false);
+                                            setTagSearchQuery("");
+                                        }}>
                                         {showTagDropdown && (
                                             <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                                                 <div className="p-3">
@@ -279,7 +276,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                                                 </div>
                                             </div>
                                         )}
-                                    </div>
+                                    </PortalDropdown>
                                 </div>
                             </div>
 

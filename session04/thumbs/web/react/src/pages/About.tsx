@@ -13,8 +13,9 @@ const About: React.FC = () => {
                 const response = await thumbsApi.getAbout();
                 setMarkdownContent(response.data);
             } catch (error) {
-                toast.error("Failed to load about content");
+                toast.error("Failed to load about content.");
                 setMarkdownContent("# About\n\nFailed to load content from server.");
+                console.error(error);
             } finally {
                 setIsLoading(false);
             }

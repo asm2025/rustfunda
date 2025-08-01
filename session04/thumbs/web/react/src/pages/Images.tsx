@@ -33,8 +33,8 @@ const Images: React.FC = () => {
 
             setImages(response.data);
         } catch (error) {
-            toast.error("Failed to load images");
-            console.error("Load images error:", error);
+            toast.error("Failed to load images.");
+            console.error(error);
             setImages({ data: [], total: 0 });
         } finally {
             setIsLoading(false);
@@ -56,18 +56,17 @@ const Images: React.FC = () => {
             }));
             setShowUpload(false); // Close upload modal after successful upload
         } catch (error) {
-            toast.error("Failed to load images");
-            console.error("Load images error:", error);
+            toast.error("Failed to load images.");
+            console.error(error);
         }
     };
 
-    const handleImageUpdate = (updatedImage: ImageModel) => {
+    const handleImageUpdate = (updatedImage: ModelWithRelated<ImageModel, TagModel>) => {
         setImages((prev) => ({
             ...prev,
-            data: prev.data.map((model) => (model.item.id === updatedImage.id ? { item: updatedImage, related: model.related } : model)),
+            data: prev.data.map((model) => (model.item.id === updatedImage.item.id ? updatedImage : model)),
         }));
-        const selectedImg = images.data.find((e) => e.item.id === updatedImage.id);
-        setSelectedImage(selectedImg || null);
+        setSelectedImage(updatedImage);
     };
 
     const handleImageDelete = (imageId: number) => {
