@@ -64,7 +64,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ image, tags, onClose, onUpdate,
                     title: data.title,
                     description: data.description,
                 });
-                onUpdate(response.data);
+                const tags = await thumbsApi.getImageTags(response.data.id!);
+                onUpdate({ item: response.data, related: tags.data.data });
                 setIsEditing(false);
                 toast.success("Image updated successfully!");
             } catch (error) {

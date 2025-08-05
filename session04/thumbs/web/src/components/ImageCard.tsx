@@ -1,4 +1,4 @@
-import React, { useState, useTransition } from "react";
+import React, { useTransition } from "react";
 import toast from "react-hot-toast";
 import { ImageModel } from "../types";
 import humanize from "humanize-plus";
