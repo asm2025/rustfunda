@@ -14,3 +14,4 @@ uuid = { version = "1", features = ["v4", "serde"] }
 dialoguer = "0"
 crossterm = "0"
 tokio ={ version = "1", features = ["full"] }
+byteorder = "1"

@@ -1,0 +1,9 @@
+[package]
+name = "collector"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+util ={ path = "../../util" }
+shared_data ={ path = "../shared_data" }
+sysinfo ={ version = "0", features = ["apple-app-store"] }

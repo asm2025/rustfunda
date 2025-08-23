@@ -46,5 +46,7 @@ members = [
 	"session04/db",
 	"session04/seaormdb",
 	"session04/web_service",
-	"session04/thumbs"
+	"session04/thumbs", 
+	"session05/shared_data",
+	"session05/collector"
 ]
