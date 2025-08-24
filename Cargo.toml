@@ -48,5 +48,5 @@ members = [
 	"session04/web_service",
 	"session04/thumbs", 
 	"session05/shared_data",
-	"session05/collector"
-]
+	"session05/collector",
+	"session05/server"]

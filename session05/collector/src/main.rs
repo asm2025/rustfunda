@@ -1,37 +1,55 @@
 mod collector;
 
 use collector::Collector;
+use shared_data::CollectorCommand;
 use std::{
     sync::{Arc, mpsc},
     time::Duration,
 };
-use util;
 
 fn main() {
-    let (tx, rx) = mpsc::channel::<shared_data::CollectorCommand>();
+    const TRIES: u32 = 10;
+    const ERRORS: u32 = 3;
+
+    let (tx, rx) = mpsc::sync_channel::<shared_data::CollectorCommand>(10);
     let collector_id = shared_data::new_collector_id();
     let mut collector = Collector::new(collector_id);
-    let mut messages = 10u32;
     let sender = Arc::new(tx);
     let handle = collector.start(sender, Duration::from_secs(1)).unwrap();
 
-    while let Ok(command) = rx.recv() {
-        collector.send(command);
-        messages -= 1;
+    let mut messages = TRIES;
+    let mut errors = ERRORS;
 
-        if messages == 0 {
-            break;
+    'main_loop: loop {
+        match rx.recv() {
+            Ok(command) => match collector.publish(command) {
+                Ok(_) => {
+                    messages -= 1;
+                    errors = ERRORS;
+
+                    if messages == 0 {
+                        let command = CollectorCommand::Exit { collector_id };
+                        let _ = collector.publish(command);
+                        break 'main_loop;
+                    }
+                }
+                Err(ex) => {
+                    errors -= 1;
+
+                    if errors == 0 {
+                        println!("Maximum errors sending to server exceeded. {}", ex);
+                        break;
+                    } else {
+                        println!("{}", ex);
+                    }
+                }
+            },
+            Err(_) => {
+                break 'main_loop;
+            }
         }
     }
 
     collector.stop();
     let _ = handle.join();
 }
-
-// fn on_metrics(t: u64, m: shared_data::Metrics) {
-//     let time = util::datetime::format_seconds_with_precision(t);
-//     println!(
-//         "{} mem: {}/{} KB, CPUs: {}, CPU usage: {:.2}%, CPU usage (avg): {:.2}%",
-//         time, m.used_memory, m.total_memory, m.cpus, m.cpu_usage, m.avg_cpu_usage
-//     );
-// }

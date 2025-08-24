@@ -6,7 +6,7 @@ use std::{
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc::Sender,
+        mpsc::SyncSender,
     },
     thread::{self, JoinHandle},
     time::{Duration, Instant},
@@ -16,7 +16,7 @@ use util::{Result, error::RmxError};
 
 #[derive(Debug, Clone)]
 pub struct Collector {
-    collector_id: u128,
+    pub collector_id: u128,
     running: Arc<AtomicBool>,
     stop_requested: Arc<AtomicBool>,
 }
@@ -34,16 +34,25 @@ impl Collector {
 
     pub fn start(
         &mut self,
-        sender: Arc<Sender<CollectorCommand>>,
+        sender: Arc<SyncSender<CollectorCommand>>,
         period: Duration,
     ) -> Result<JoinHandle<()>> {
-        if self.running.load(Ordering::Relaxed) {
+        if self
+            .running
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_err()
+        {
             return Err(RmxError::InvalidOperation(
                 "Collector is already running.".to_string(),
             ));
         }
 
-        let this = self.clone();
+        // Reset cancellation
+        self.stop_requested.store(false, Ordering::Release);
+
+        let collector_id = self.collector_id;
+        let stop_requested = self.stop_requested.clone();
+        let running = self.running.clone();
         let sender = sender.clone();
         let handle = thread::Builder::new()
             .name("collector worker".to_string())
@@ -54,7 +63,7 @@ impl Collector {
 
                 let mut next_tick = Instant::now() + period;
 
-                while !this.stop_requested.load(Ordering::Relaxed) {
+                while !stop_requested.load(Ordering::Relaxed) {
                     let now = Instant::now();
 
                     if now < next_tick {
@@ -63,19 +72,8 @@ impl Collector {
 
                     next_tick += period;
 
-                    // Try to acquire the "try-lock". If it's already set, skip this tick.
-                    if this
-                        .running
-                        .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
-                        .is_err()
-                    {
-                        continue;
-                    }
-
                     let res = panic::catch_unwind(panic::AssertUnwindSafe({
-                        let this = this.clone();
                         let sender = sender.clone();
-                        let collector_id = this.collector_id;
                         let sys_ref = &mut sys;
                         move || {
                             sys_ref.refresh_cpu_all();
@@ -110,7 +108,7 @@ impl Collector {
                         }
                     }));
 
-                    this.running.store(false, Ordering::Release);
+                    running.store(false, Ordering::Release);
 
                     if let Err(err) = res {
                         eprintln!("collector worker caught panic: {:?}", err);
@@ -122,22 +120,39 @@ impl Collector {
     }
 
     pub fn stop(&mut self) {
-        self.stop_requested.store(true, Ordering::Relaxed);
+        if self
+            .stop_requested
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_err()
+        {
+            return;
+        }
+
+        println!("Stopping the collector.");
     }
 
-    pub fn send(&self, command: CollectorCommand) {
-        let bytes = shared_data::encode(self.collector_id, command);
+    pub fn publish(&self, command: CollectorCommand) -> Result<()> {
+        let bytes = shared_data::encode(command);
         println!("Sending {} bytes", bytes.len());
 
-        let mut stream = TcpStream::connect(shared_data::DATA_COLLECTION_ADDRESS).unwrap();
-        stream.write_all(&bytes).unwrap();
+        let mut stream = TcpStream::connect(shared_data::DATA_COLLECTION_ADDRESS).map_err(|e| {
+            RmxError::Network(format!(
+                "Failed to connect to {}. {}",
+                shared_data::DATA_COLLECTION_ADDRESS,
+                e
+            ))
+        })?;
+        stream.write_all(&bytes).map_err(|e| {
+            RmxError::Network(format!(
+                "Failed to send data to {}. {}",
+                shared_data::DATA_COLLECTION_ADDRESS,
+                e
+            ))
+        })?;
+        Ok(())
     }
 
-    pub fn collector_id(&self) -> u128 {
-        self.collector_id
-    }
-
-    pub fn is_collecting(&self) -> bool {
+    pub fn is_running(&self) -> bool {
         self.running.load(Ordering::Acquire)
     }
 }

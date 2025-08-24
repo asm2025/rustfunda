@@ -3765,6 +3765,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "shared_data",
+ "tokio",
+ "util",
+]
+
+[[package]]
 name = "session01"
 version = "0.1.0"
 
