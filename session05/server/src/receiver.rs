@@ -20,17 +20,14 @@ use util::{Result, error::RmxError};
 #[derive(Debug, Clone)]
 pub struct Receiver {
     running: Arc<AtomicBool>,
-    stop_requested: Arc<AtomicBool>,
     notify: Arc<Notify>,
 }
 
 impl Receiver {
     pub fn new() -> Self {
         let running = Arc::new(AtomicBool::new(false));
-        let stop_requested = Arc::new(AtomicBool::new(false));
         Self {
             running,
-            stop_requested,
             notify: Arc::new(Notify::new()),
         }
     }
@@ -48,9 +45,6 @@ impl Receiver {
                 "Receiver is already running.".to_string(),
             ));
         }
-
-        // Reset cancellation
-        self.stop_requested.store(false, Ordering::Release);
 
         let running = self.running.clone();
         let notify = self.notify.clone();
@@ -95,11 +89,7 @@ impl Receiver {
     }
 
     pub fn stop(&mut self) {
-        if self
-            .stop_requested
-            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
-            .is_err()
-        {
+        if !self.is_running() {
             return;
         }
 
