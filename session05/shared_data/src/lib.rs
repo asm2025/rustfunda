@@ -1,8 +1,8 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::io::{Cursor, Read};
 use util::{Result, error::RmxError};
+use uuid::Uuid;
 
 pub const DATA_COLLECTION_ADDRESS: &str = "127.0.0.1:9004";
 
@@ -29,7 +29,7 @@ pub enum CollectorCommand {
 }
 
 pub fn new_collector_id() -> u128 {
-    rand::rng().random()
+    Uuid::new_v4().as_u128()
 }
 
 pub fn encode(command: CollectorCommand) -> Vec<u8> {
@@ -37,9 +37,9 @@ pub fn encode(command: CollectorCommand) -> Vec<u8> {
     let bytes = json.as_bytes();
     let crc = crc32fast::hash(bytes);
     let size = bytes.len() as u32;
-    let timestamp = util::datetime::unix::now();
+    let timestamp = util::datetime::unix::now_micros();
 
-    let capacity = size_of::<u64>() // timestamp
+    let capacity = size_of::<u128>() // timestamp
 		+ size_of::<u16>() // VERSION_NUMBER
         + size_of::<u32>() // payload size
         + bytes.len() // payload bytes
@@ -47,7 +47,7 @@ pub fn encode(command: CollectorCommand) -> Vec<u8> {
 
     let mut result = Vec::with_capacity(capacity);
 
-    result.write_u64::<BigEndian>(timestamp).unwrap();
+    result.write_u128::<BigEndian>(timestamp).unwrap();
     result.write_u16::<BigEndian>(VERSION_NUMBER).unwrap();
     result.write_u32::<BigEndian>(size).unwrap();
     result.extend_from_slice(bytes);
@@ -55,9 +55,9 @@ pub fn encode(command: CollectorCommand) -> Vec<u8> {
     result
 }
 
-pub fn decode(bytes: &[u8]) -> Result<(u64, CollectorCommand)> {
+pub fn decode(bytes: &[u8]) -> Result<(u128, CollectorCommand)> {
     let mut cursor = Cursor::new(bytes);
-    let timestamp = cursor.read_u64::<BigEndian>()?;
+    let timestamp = cursor.read_u128::<BigEndian>()?;
     let version = cursor.read_u16::<BigEndian>()?;
 
     if version != VERSION_NUMBER {

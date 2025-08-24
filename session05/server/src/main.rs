@@ -7,7 +7,7 @@ use util::{Result, datetime};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let (tx, rx) = mpsc::sync_channel::<(u64, shared_data::CollectorCommand)>(10);
+    let (tx, rx) = mpsc::sync_channel::<(u128, shared_data::CollectorCommand)>(10);
     let mut receiver = Receiver::new();
     let sender = Arc::new(tx);
     let handle = receiver.start(sender).unwrap();
@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
                     metrics,
                 } => println!(
                     "{} {} mem: {}/{} KB, CPUs: {}, CPU usage: {:.2}%, CPU usage (avg): {:.2}%",
-                    datetime::format_seconds(timestamp),
+                    datetime::format_seconds_long(timestamp),
                     collector_id,
                     metrics.used_memory,
                     metrics.total_memory,

@@ -37,7 +37,7 @@ impl Receiver {
 
     pub fn start(
         &mut self,
-        sender: Arc<SyncSender<(u64, CollectorCommand)>>,
+        sender: Arc<SyncSender<(u128, CollectorCommand)>>,
     ) -> Result<JoinHandle<()>> {
         if self
             .running
@@ -114,7 +114,7 @@ impl Receiver {
     async fn new_connection(
         mut socket: TcpStream,
         address: SocketAddr,
-        sender: Arc<SyncSender<(u64, CollectorCommand)>>,
+        sender: Arc<SyncSender<(u128, CollectorCommand)>>,
     ) {
         println!("New connection from {address:?}.");
 

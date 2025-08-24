@@ -8,5 +8,5 @@ util = { path = "../../util" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 crc32fast = "1"
-rand = "0"
 byteorder = "1"
+uuid = { version = "1", features = ["v4"] }

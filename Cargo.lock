@@ -3842,10 +3842,10 @@ version = "0.1.0"
 dependencies = [
  "byteorder",
  "crc32fast",
- "rand 0.9.2",
  "serde",
  "serde_json",
  "util",
+ "uuid",
 ]
 
 [[package]]
@@ -4835,6 +4835,7 @@ version = "0.1.0"
 dependencies = [
  "bcrypt",
  "byteorder",
+ "chrono",
  "crossterm",
  "dialoguer",
  "fake",

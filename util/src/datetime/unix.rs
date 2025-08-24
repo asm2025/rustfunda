@@ -4,6 +4,10 @@ pub fn now() -> u64 {
     unix_time().as_secs()
 }
 
+pub fn now_micros() -> u128 {
+    unix_time().as_micros()
+}
+
 pub fn now_millis() -> u128 {
     unix_time().as_millis()
 }
