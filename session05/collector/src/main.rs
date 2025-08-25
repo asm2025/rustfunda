@@ -22,14 +22,14 @@ fn main() {
 
     'main_loop: loop {
         match rx.recv() {
-            Ok(command) => match collector.publish(command) {
+            Ok(command) => match collector.publish(&command) {
                 Ok(_) => {
                     messages -= 1;
                     errors = ERRORS;
 
                     if messages == 0 {
                         let command = CollectorCommand::Exit { collector_id };
-                        let _ = collector.publish(command);
+                        let _ = collector.publish(&command);
                         break 'main_loop;
                     }
                 }

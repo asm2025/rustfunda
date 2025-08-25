@@ -57,7 +57,7 @@ impl Receiver {
                 local.block_on(&rt, async move {
                     task::spawn_local(async move {
                         let listener = TcpListener::bind(DATA_COLLECTION_ADDRESS).await.unwrap();
-                        println!("Listening on {DATA_COLLECTION_ADDRESS}");
+                        tracing::info!("Listening on {DATA_COLLECTION_ADDRESS}");
 
 						loop {
 							tokio::select! {

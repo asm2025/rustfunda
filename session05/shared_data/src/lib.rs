@@ -32,7 +32,7 @@ pub fn new_collector_id() -> u128 {
     Uuid::new_v4().as_u128()
 }
 
-pub fn encode(command: CollectorCommand) -> Vec<u8> {
+pub fn encode(command: &CollectorCommand) -> Vec<u8> {
     let json = serde_json::to_string(&command).unwrap();
     let bytes = json.as_bytes();
     let crc = crc32fast::hash(bytes);
@@ -98,7 +98,7 @@ mod tests {
             collector_id,
             metrics,
         };
-        let encoded = encode(command.clone());
+        let encoded = encode(&command);
         let (timestamp, decoded) = decode(&encoded).unwrap();
         assert!(timestamp > 0);
         assert_eq!(command, decoded);

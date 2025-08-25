@@ -26,6 +26,9 @@ pub enum RmxError {
     #[error("Invalid input. {0}")]
     Invalid(String),
 
+    #[error("Database error. {0}")]
+    Database(String),
+
     #[error("Missing error. {0}")]
     Missing(String),
 

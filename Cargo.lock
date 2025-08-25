@@ -3768,9 +3768,21 @@ dependencies = [
 name = "server"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "axum",
+ "dotenvy",
+ "futures",
+ "once_cell",
+ "serde",
  "shared_data",
+ "sqlx",
  "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
  "util",
+ "uuid",
 ]
 
 [[package]]

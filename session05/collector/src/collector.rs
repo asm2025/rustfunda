@@ -131,7 +131,7 @@ impl Collector {
         println!("Stopping the collector.");
     }
 
-    pub fn publish(&self, command: CollectorCommand) -> Result<()> {
+    pub fn publish(&self, command: &CollectorCommand) -> Result<()> {
         let bytes = shared_data::encode(command);
         println!("Sending {} bytes", bytes.len());
 

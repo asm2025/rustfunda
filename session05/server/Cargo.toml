@@ -7,3 +7,15 @@ edition = "2024"
 util ={ path = "../../util" }
 shared_data ={ path = "../shared_data" }
 tokio = { version = "1", features = ["full"] }
+tokio-util = "0"
+tracing = "0"
+tracing-subscriber = { version = "0", features = ["fmt", "env-filter"] }
+tracing-appender = "0"
+dotenvy = "0"
+sqlx = { version = "0", features = ["runtime-tokio-rustls", "sqlite", "migrate"] }
+uuid = { version = "1", features = ["v4"] }
+axum = "0"
+futures = "0"
+serde = { version = "1", features = ["derive"] }
+once_cell = "1"
+anyhow = "1"

@@ -64,7 +64,7 @@ async fn run() -> Result<()> {
     let db_url = std::env::var("DATABASE_URL")?;
     let db = setup_database(&db_url).await?;
     /*
-     * Must specify the associated tyupes.
+     * Must specify the associated types.
      * IImageRepository<Entity = Type, PrimaryKey = Type, Model = Type, ActiveModel = Type, UpdateModel = Type, Related = Type, RelatedPrimaryKey = Type>
      */
     let images_repo: Arc<dyn IImageRepository + Send + Sync> =
