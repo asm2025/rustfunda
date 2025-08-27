@@ -1,3 +1,4 @@
+use bincode::{Decode, Encode, config};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -9,7 +10,7 @@ pub const DATA_COLLECTION_ADDRESS: &str = "127.0.0.1:9004";
 
 const VERSION_NUMBER: u16 = 1;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Decode, Encode, Clone, PartialEq)]
 pub struct Metrics {
     pub total_memory: u64,
     pub used_memory: u64,
@@ -36,7 +37,7 @@ pub struct DataPoint {
     pub avg_cpu_usage: f32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Decode, Encode, Clone, PartialEq)]
 pub enum CollectorCommand {
     SubmitData {
         collector_id: u128,
@@ -52,9 +53,10 @@ pub fn new_collector_id() -> u128 {
 }
 
 pub fn encode(command: &CollectorCommand) -> Vec<u8> {
-    let json = serde_json::to_string(&command).unwrap();
-    let bytes = json.as_bytes();
-    let crc = crc32fast::hash(bytes);
+    //let json = serde_json::to_string(&command).unwrap();
+    let config = config::standard();
+    let bytes = bincode::encode_to_vec(&command, config).unwrap();
+    let crc = crc32fast::hash(&bytes);
     let size = bytes.len() as u32;
     let timestamp = util::datetime::unix::now_micros();
 
@@ -69,7 +71,7 @@ pub fn encode(command: &CollectorCommand) -> Vec<u8> {
     result.write_u128::<BigEndian>(timestamp).unwrap();
     result.write_u16::<BigEndian>(VERSION_NUMBER).unwrap();
     result.write_u32::<BigEndian>(size).unwrap();
-    result.extend_from_slice(bytes);
+    result.extend_from_slice(&bytes);
     result.write_u32::<BigEndian>(crc).unwrap();
     result
 }
@@ -84,18 +86,18 @@ pub fn decode(bytes: &[u8]) -> Result<(u128, CollectorCommand)> {
     }
 
     let size = cursor.read_u32::<BigEndian>()? as usize;
-    let mut payload = vec![0u8; size];
-    cursor.read_exact(&mut payload)?;
+    let mut buffer = vec![0u8; size];
+    cursor.read_exact(&mut buffer)?;
     let crc = cursor.read_u32::<BigEndian>()?;
 
-    let computed_crc = crc32fast::hash(&payload);
+    let computed_crc = crc32fast::hash(&buffer);
 
     if crc != computed_crc {
         return Err(RmxError::Invalid("Bad CRC checksum.".to_string()));
     }
 
-    let command = serde_json::from_slice(&payload)
-        .map_err(|e| RmxError::Invalid(format!("Invalid input data. {}", e)))?;
+    let config = config::standard();
+    let (command, _) = bincode::decode_from_slice(&buffer, config).unwrap();
     Ok((timestamp, command))
 }
 
