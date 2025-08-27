@@ -8,7 +8,7 @@ use std::{
 };
 
 fn main() {
-    const TRIES: u32 = 10;
+    const TRIES: u32 = 100;
     const ERRORS: u32 = 3;
 
     let (tx, rx) = mpsc::sync_channel::<shared_data::CollectorCommand>(10);

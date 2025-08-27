@@ -5,7 +5,6 @@ use axum::{
     Extension, Json, Router,
     extract::Path as axum_path,
     http::HeaderValue,
-    response::Html,
     routing::{delete, get},
 };
 use dotenvy::dotenv;
@@ -177,7 +176,6 @@ fn setup_router() -> Router {
 
     tracing::info!("Configuring router");
     Router::new()
-        .route("/", get(web::home))
         .route("/api/collectors", get(web::show_collectors))
         .route(
             "/api/collectors/{uuid}",
@@ -257,7 +255,8 @@ mod data {
         const SQL: &str = "SELECT collector_id, 
     MAX(received) AS last_seen 
     FROM timeseries ts
-	GROUP BY ts.collector_id";
+	GROUP BY collector_id
+	ORDER BY last_seen";
         let mut collectors = sqlx::query_as::<_, Collector>(SQL)
             .fetch_all(db)
             .await
@@ -342,14 +341,6 @@ mod data {
 
 mod web {
     use super::*;
-
-    pub async fn home() -> Html<String> {
-        let content = "<p>Hello, <strong>World!</strong></p>
-		<a href='/api/metrics'>/api/metrics</a>
-		"
-        .to_string();
-        Html(content)
-    }
 
     pub async fn show_collectors(Extension(db): Extension<SqlitePool>) -> Json<Vec<Collector>> {
         let rows = data::get_collectors(&db).await.unwrap();
