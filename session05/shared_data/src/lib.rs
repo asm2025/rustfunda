@@ -2,7 +2,7 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::io::{Cursor, Read};
-use util::{Result, datetime, error::RmxError};
+use util::{Result, error::RmxError};
 use uuid::Uuid;
 
 pub const DATA_COLLECTION_ADDRESS: &str = "127.0.0.1:9004";
@@ -20,48 +20,20 @@ pub struct Metrics {
 
 #[derive(FromRow, Debug, Serialize)]
 pub struct Collector {
-    id: i32,
-    collector_id: String,
-    last_seen: i64,
+    pub collector_id: String,
+    pub last_seen: String,
 }
 
-#[derive(FromRow, Debug)]
-pub struct DataPointRaw {
+#[derive(FromRow, Debug, Serialize)]
+pub struct DataPoint {
     pub id: i32,
     pub collector_id: String,
-    pub received: i64,
+    pub received: String,
     pub total_memory: i64,
     pub used_memory: i64,
     pub cpus: i32,
     pub cpu_usage: f32,
     pub avg_cpu_usage: f32,
-}
-
-#[derive(Debug, Serialize)]
-pub struct DataPoint {
-    pub id: u32,
-    pub collector_id: String,
-    pub received: String,
-    pub total_memory: u64,
-    pub used_memory: u64,
-    pub cpus: u32,
-    pub cpu_usage: f32,
-    pub avg_cpu_usage: f32,
-}
-
-impl From<DataPointRaw> for DataPoint {
-    fn from(value: DataPointRaw) -> Self {
-        DataPoint {
-            id: value.id as u32,
-            collector_id: value.collector_id,
-            received: datetime::format_seconds(value.received),
-            total_memory: value.total_memory as u64,
-            used_memory: value.used_memory as u64,
-            cpus: value.cpus as u32,
-            cpu_usage: value.cpu_usage,
-            avg_cpu_usage: value.avg_cpu_usage,
-        }
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]

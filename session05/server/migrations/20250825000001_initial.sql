@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS timeseries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     collector_id TEXT,
-    received BIGINT,
+    received TEXT,
     total_memory BIGINT,
     used_memory BIGINT,
     cpus INTEGER,

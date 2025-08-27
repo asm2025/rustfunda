@@ -5,6 +5,7 @@ use axum::{
     Extension, Json, Router,
     extract::Path as axum_path,
     http::HeaderValue,
+    response::Html,
     routing::{delete, get},
 };
 use dotenvy::dotenv;
@@ -176,6 +177,7 @@ fn setup_router() -> Router {
 
     tracing::info!("Configuring router");
     Router::new()
+        .route("/", get(web::home))
         .route("/api/collectors", get(web::show_collectors))
         .route(
             "/api/collectors/{uuid}",
@@ -249,47 +251,54 @@ async fn run_server(app: Router) -> JoinHandle<()> {
 }
 
 mod data {
-    use anyhow::Ok;
-    use shared_data::DataPointRaw;
-
     use super::*;
 
     pub async fn get_collectors(db: &Pool<Sqlite>) -> Result<Vec<Collector>> {
-        const SQL: &str = "SELECT 
-    DISTINCT(id) AS id, 
-    collector_id, 
-    (SELECT MAX(received) FROM timeseries WHERE collector_id = ts.collector_id) AS last_seen 
-    FROM timeseries ts";
-        sqlx::query_as::<_, Collector>(SQL)
-            .fetch_all(db)
-            .await
-            .map_err(|ex| ex.into())
-    }
-
-    pub async fn get_metrics(db: &Pool<Sqlite>) -> Result<Vec<DataPoint>> {
-        let data_points_raw = sqlx::query_as::<_, DataPointRaw>("SELECT * FROM TIMESERIES")
+        const SQL: &str = "SELECT collector_id, 
+    MAX(received) AS last_seen 
+    FROM timeseries ts
+	GROUP BY ts.collector_id";
+        let mut collectors = sqlx::query_as::<_, Collector>(SQL)
             .fetch_all(db)
             .await
             .unwrap();
-        let data_points = data_points_raw
-            .into_iter()
-            .map(|raw| DataPoint::from(raw))
-            .collect();
+
+        for collector in &mut collectors {
+            let last_seen: u128 = collector.last_seen.parse().unwrap();
+            collector.last_seen = datetime::format_seconds_long(last_seen);
+        }
+
+        Ok(collectors)
+    }
+
+    pub async fn get_metrics(db: &Pool<Sqlite>) -> Result<Vec<DataPoint>> {
+        let mut data_points = sqlx::query_as::<_, DataPoint>("SELECT * FROM TIMESERIES")
+            .fetch_all(db)
+            .await
+            .unwrap();
+
+        for data_point in &mut data_points {
+            let received: u128 = data_point.received.parse().unwrap();
+            data_point.received = datetime::format_seconds_long(received);
+        }
+
         Ok(data_points)
     }
 
     pub async fn get_metrics_by_collector(db: &Pool<Sqlite>, uuid: &str) -> Result<Vec<DataPoint>> {
-        let data_points_raw = sqlx::query_as::<_, DataPointRaw>(
+        let mut data_points = sqlx::query_as::<_, DataPoint>(
             "SELECT * FROM timeseries WHERE collector_id = ? ORDER BY received",
         )
         .bind(uuid)
         .fetch_all(db)
         .await
         .unwrap();
-        let data_points = data_points_raw
-            .into_iter()
-            .map(|raw| DataPoint::from(raw))
-            .collect();
+
+        for data_point in &mut data_points {
+            let received: u128 = data_point.received.parse().unwrap();
+            data_point.received = datetime::format_seconds_long(received);
+        }
+
         Ok(data_points)
     }
 
@@ -333,6 +342,14 @@ mod data {
 
 mod web {
     use super::*;
+
+    pub async fn home() -> Html<String> {
+        let content = "<p>Hello, <strong>World!</strong></p>
+		<a href='/api/metrics'>/api/metrics</a>
+		"
+        .to_string();
+        Html(content)
+    }
 
     pub async fn show_collectors(Extension(db): Extension<SqlitePool>) -> Json<Vec<Collector>> {
         let rows = data::get_collectors(&db).await.unwrap();
