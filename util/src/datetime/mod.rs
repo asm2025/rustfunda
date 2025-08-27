@@ -7,9 +7,9 @@ pub fn format_duration(duration: Duration) -> String {
     format_seconds_long(duration.as_micros())
 }
 
-pub fn format_seconds(time: u64) -> String {
+pub fn format_seconds(time: i64) -> String {
     Local
-        .timestamp_opt(time as i64, 0)
+        .timestamp_opt(time, 0)
         .single()
         .map(|dt| dt.format("%H:%M:%S").to_string())
         .unwrap_or_else(|| "invalid time".to_string())
